@@ -1,0 +1,209 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Roaming the Level</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have a good lesson today, class. I mean, damned good. If the previous tutorials were high school, this is college. Without the beer, of course.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today's lesson has made some programmers, and broken others. It can take 50 pages worth of code. It can drive you to drink. It is navigation.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There has never been a monster that roams the level and picks up player items. This is just not done. It must frighten the average coder. Today we'll learn how to do it in three subroutines.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The problem is, monsters are not allowed to touch the items. At all.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 1. We take a quick look at id Software's roaming routine, then improve it:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+=============
+ai_walk
+
+The monster is walking it's beat
+=============
+*/
+void(float dist) ai_walk =
+{
+	local vector		mtemp;
+	
+	movedist = dist;
+	
+	if (self.classname == "monster_dragon")
+	{
+		movetogoal (dist);
+		return;
+	}
+	// check for noticing a player
+	if (FindTarget ())
+		return;
+
+	movetogoal (dist);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hmm, that's a bit fat. Meaning, seven of those lines aren't even needed (QuakeC is full of fat). The FindTarget() looks for enemies, so we need that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then there is movetogoal(). This C-language function is a source of great debate for AI programmers. Most don't like it because it doesn't look for ledges in the map and because it can be quite roundabout.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I agree that movetogoal() can be tricky. For instance, I've seen my bots run all the way down the map in the opposite direction of the goal using this function. But they always come back.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, movetogoal() will move the monsters around a bit randomly to try to avoid obstacles. It literally tries different paths to get to where its going.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is exactly why I like the function. It's quite ironic that everyone complains about id's terrible creature intelligence, yet they included this fairly powerful one-line navigation routine. In addition, the number within the parentheses will be the distance the monster moves each frame, so its rather flexible.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, it will do well for our purposes here. We still have that fat routine to deal with, though. Let's clean it up by replacing it with this:<P>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+=============
+ai_walk
+
+The monster is looking for an collecting items.
+=============
+*/
+void(float dist) ai_walk =
+{
+	
+	// check for noticing a player
+	if (FindTarget ())
+		return;
+
+	bot_search_for_items();
+	bot_grab_items();
+
+	movetogoal(dist);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I hope that is self-explanatory. If not, well, the first section, between the double lines, is a remark. Next comes the name of the routine. The part that says "float dist" is called a parameter. This is a variable that is passed to this routine from another part of the program. For example, when we call this subroutine, it will look like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	ai_walk(20);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, we must always check for a player, here with FindTarget().<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then we have two lines which make sense but are unfamiliar. The two "bot" routines are ones we will be adding. Last we have movetogoal(), and this is where the parameter comes into play. As you know, each monster moves at a different speed. So when ai_walk() is called by the demon, the variable dist will be higher than when it is called by the shambler.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 2. The movetogoal() function will navigate towards the entity stored as the monster's goalentity. Thus, we need to find items. We will simply check a circle of area around him for entities.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Insert this subroutine before the previous one:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() bot_search_for_items =
+// ------------------------------------------------
+{
+local entity item;
+
+	if (time > self.search_time)
+		self.goalentity = world;
+
+	if (self.goalentity)
+		return;
+
+	item = findradius(self.origin, 1500);
+
+	while(item)
+		{
+		if ( (item.flags & FL_ITEM) && visible(item) && item.model != string_null)
+			{
+			self.goalentity = item;
+			self.search_time = time + 30;
+			}
+		item = item.chain;
+		}
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The best way for us to understand what all this means is to write it out in English. Here goes:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If I have searched for my goal for long enough, I'll give up on that item. But if I already have a goal, I'll just leave the subroutine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I will look at entities within 1500 units around me. While there are items to look at, I'll keep looking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If I find one that is an item and is visible to me and that is not invisible right now, then I will choose that as my goal. I will look for it for the next thirty seconds.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If there are more entities, I will keep looking at them.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, good. That makes sense. So now he has a goal entity and will try movetogoal() for the next 30 seconds. But remember, in QuakeC the monsters are not allowed to touch things. If you open ITEMS.QC and look at the health_touch() routine, you will see this bad, bad line:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname != "player")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boooo! Hissss! This means that if the entity which is touching the health is not named a player, then he's not allowed to enter the subroutine. I guess id didn't want us to make mobots. So what are we going to do, dammit?<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 3. In life they say if you want something, you have to take it. And that's just what we're gonna do.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paste this little routine above the previous two:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_grab_items =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	if (self.goalentity == world)
+		return;
+
+	if (vlen(self.origin - self.goalentity.origin) <= 70)
+		{
+		self.goalentity.solid = SOLID_NOT;
+		self.goalentity.model = string_null;
+		self.goalentity.nextthink = time + 20;
+		self.goalentity.think = SUB_regen;
+		if (self.goalentity.healamount)
+			sound (self, CHAN_ITEM, "items/health1.wav", 1, ATTN_NORM);
+		else if (self.goalentity.weapon)
+			sound (self, CHAN_ITEM, "weapons/pkup.wav", 1, ATTN_NORM);
+		else
+			sound(self, CHAN_ITEM, "items/armor1.wav", 1, ATTN_NORM);
+		self.goalentity = world;
+		}
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Beautiful, just beautiful. This solves our item problem the old-fashioned way: by cheating.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, every item in the game has a model. When you touch the thing, you set its model to "string_null"; basically you make it invisible and untouchable for 30 seconds. Yes, that's right, items are <B>always</B> on the map, you merely render them as unseeable ghost objects. Then, of course, the original model is restored and the object is made solid again.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What our code does is this: when a monster is within 70 units of his goal item, he simulates a touch event. In other words, he makes it invisible. He also makes a sound like he's picking it up.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So, the difference is that in id Software's code, the touch event occurs in the item's subroutine, whereas in our code it happens within the monster's routine. Ha. We're good.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If he doesn't have a goal entity, he doesn't even check for this. If he does and makes this happen, he resets his goal entity to the world.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uh, okay, unless I'm mistaken, that's it. But I will recap the ideas we've executed. First, while our monster walks, he looks for any entity that is flagged as an item. Second, he uses movetogoal() to move toward that item. In addition, he uses movetogoal() to move randomly if he has no goal entity.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Third, if he comes close to his goal, he turns it invisible and makes a pick-up sound, thus pretending to pick it up. Finally, he resets his goal entity to world and moves on to other parts of the map. The previous goal item will reset in about 30 seconds.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I hope you understand all that simple stuff, because if you don't, I'm gonna come over there and smack you.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Every item is flagged with FL_ONGROUND and has its own model<BR>
+2. An item's model is briefly set to string_null after it is touched<BR> 
+3. Monsters cause bad things to happen if they touch items<BR>
+4. With a goal entity and the movetogoal() function, a monster can go a long way.<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

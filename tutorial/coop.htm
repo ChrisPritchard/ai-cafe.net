@@ -1,0 +1,118 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Co-op Support</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My pal and supporter ArwingX recently told me that he finally convinced the author of the GuardBot to release his source code. In my selfish and fame-hungry way, I said, "Traitor! Heretic! Turncoat! Why aren't you using my Tutor Bot!" Well, I didn't actually say that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, ArwingX needed a bot with co-op support. So, in my usual selfless, helpful way, I asked "If I write a tutorial on co-op support, will you use my source code?" And he said yes.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(I should also note that my boy Ze0 from the Epidemic asked for co-op support as well. I must be political now.)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So here we are. With this lesson your bot will learn how to look for an attack monsters. Also, you will be able to teleport your bot back to you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First step. We will write a simple routine which the bot can use to search for those nasty critters. Scroll down to bot_look_for_players() or thereabouts, and shove the following before it:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() bot_search_for_monsters =
+// ------------------------------------------------
+{
+local entity mon;
+
+	if (self.enemy)
+		return;
+
+// checks a radius around him for creatures
+	mon = findradius(self.origin, 1500);
+
+	while(mon)
+		{
+		if ( (mon.flags & FL_MONSTER) && visible(mon) && mon.health > 0)
+			{
+			self.search_time = time + 30;
+			self.goalentity = mon;
+			self.enemy = mon;
+			self.th_run();
+			return;
+			}
+		mon = mon.chain;
+		}
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple, eh? Basically I copied bot_search_for_items() and changed a couple things. The bot will check all the entities around him within a 1500 unit radius. We don't need to check their classnames, because all creatures are flagged, or marked, with the label FL_MONSTER.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If he sees one, he will make it his enemy, enter his fighting state, and leave the current routine. It's bad form to exit the routine from within a while() loop, but we're not in a beauty pageant here.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second step. Scroll down to bot_walk(). You will see there that the bot makes a call to bot_look_for_players(). Just add a call to bot_search_for_monsters(). Go down to bot_stand() and do the same. Your bot will now look for and hopefully kill monsters.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Third step. For full and tasty co-op goodness, we want to add a routine with which you can teleport your helper bot back to you. Go into WEAPONS.QC and move down to ImpulseCommands(). Before that routine, paste this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() teleport_bot =
+// ------------------------------------------------
+{
+local entity bot;
+
+	bot = find(world, classname, "bot");
+	if (!bot)
+		{
+		bprint("no bot to teleport\n");
+		return;
+		}
+
+	makevectors(self.v_angle);
+	if (POINT_CONTENTS(self.origin + v_forward*100) != CONTENT_EMPTY)
+		{
+		bprint("step away from the wall\n")
+		return;
+		}
+
+	if (vlen(self.origin - bot.origin) > 50)
+		{
+		spawn_tfog(self.origin + v_forward*100);
+		spawn_tdeath(self.origin + v_forward*100, self);
+		setorigin(bot, self.origin + v_forward*100);
+		}
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here we look for an entity named "bot". If we don't find one, we just leave. We call makevectors() to find the value v_forward and check for a wall in front of the player. If the bot is not close to the player, we teleport the bot 100 units in front of him. If the bot is near him, we obviously don't need to bring him over.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fourth step. Go into ImpulseCommands() and underneath your create_bot() lines, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 102)
+		teleport_bot();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you can't tell me what this does, I'm gonna hit you. Anyway, those are the fundamentals of a co-op bot. Any questions?<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. All monsters are marked with FL_MONSTER<BR>
+2. If there is a shortcut, take it<BR>
+3. A bot can check around him for any type of entity<BR>
+4. Coffee is a sucker for a good tutorial<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

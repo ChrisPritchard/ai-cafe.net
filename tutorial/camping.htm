@@ -1,0 +1,97 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Camping</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a butt-simple tutorial, but it may give your bot a little personality. For the longest time, there wasn't one Quake bot who ever stopped running. That's all bots did for like a year after Quake came out, just ran and ran and never stopped.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Maybe that's no big deal, but it sure is boring. If you want your bot to look like a real player, sometimes he has to act like one. Sometimes that includes camping near good weapons.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Even though the native Tutor Bot source code does not yet pick up items per se, this can still be a nifty little feature. If you are still using bot_grab_items(), open tutor.qc and scroll down to that routine, which looks like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_grab_items =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+// sees if he's close enough to pick that item up
+
+	if (self.goalentity == world)
+		return;
+
+	if (vlen(self.origin - self.goalentity.origin) <= 70)
+		{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We want to put another if ... then condition inside this one. So after that bracket we want to add this crap:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		if (self.goalentity.classname == "weapon_rocketlauncher" && time > self.pausetime + 15)
+			{
+			self.pausetime = time + 120;
+			self.think = self.th_stand;
+			self.nextthink = time + 0.1;
+			}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, it's time for one of my famous "English" explanations:<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If I'm within 70 units of my goal, and my goal is a rocket launcher, and I haven't camped in the last 15 seconds, I will decide to just stand here for two minutes."<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, whatever you say about my AI knowledge, I'm sure good at English, huh?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The "&& time > self.pausetime + 15" is necessary because after those 120 seconds, he would still be touching the same item and decide to camp all over again. Life is messy sometimes.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, so you may not use bot_grab_items() anymore; you may have altered the code in items.qc to allow your bot to pick up things directly. If so, open up that file and slip down to the sub called weapon_touch(). Toward the middle you shouldsee this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	else if (self.classname == "weapon_rocketlauncher")
+	{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right after the bracket, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname == "bot" && time > other.pausetime + 15)
+		{
+		other.pausetime = time + 120;
+		other.think = other.th_stand;
+		other.nextthink = time + 0.1;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hmm, interesting. This is something we haven't seen too much of at the AI Cafe, yet I use this technique. Here, the rocket launcher itself is telling the bot to camp for two minutes. This is helpful because the bot doesn't have to do any work.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But notice one thing: above, the self entity was the bot, since he was the one thinking in bot_grab_items(). But here, the weapon is the self entity, and the bot touching it is the other. Don't confuse those, or there will surely be chaos.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can change a couple things here, of course. You can make him camp near a different weapon, or mega health, or you can make him camp longer. And remember, your bot is not a shark; he doesn't always have to move forward. As I've always said, just have fun, dammit.<BR>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. You can make your bot stand with self.pausetime<BR>
+2. Remember the difference between self and other entities<BR>
+3. Bots should sometimes stop and smell the roses<P> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

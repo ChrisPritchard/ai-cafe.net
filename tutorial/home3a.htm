@@ -1,0 +1,130 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Homework Assignment No. 3 Answer</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So how did you fare? That last assigment could've been tough; luckily you have been schooled in the Coffee Way of Utter Simplicity, so you did alright.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When the player stepped onto the grenade launcher, he did not receive the weapon unless he had three frags. If he did, then three frags would be subtracted from him as payment, and he earned the gun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;At least, that should have happened.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I really hope you got it. I like this idea. Anyhow, let's check out my solution.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Knowing myself, I knew that I didn't want to do a lot of work. I wanted to do it all in one subroutine. I know that routine just had to be weapon_touch(), for obvious reasons. That's in items.qc, so I opened that up and located it, because I knew it looked like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+=============
+weapon_touch
+=============
+*/
+float() W_BestWeapon;
+
+void() weapon_touch =
+{
+	local	float	hadammo, best, new, old;
+	local	entity	stemp;
+	local	float	leave;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then I paused. I grunted. I wondered. I sipped coffee. I scratched myself. Then after that stuff I pasted this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+
+if (cvar("deathmatch") == 7)
+	{
+	local float not_enough, price;
+	not_enough = FALSE;
+
+	if (self.classname == "weapon_supershotgun && other.classname == "player" && other.frags < 1)
+		not_enough = TRUE;
+		else price = 1;
+	if (self.classname == "weapon_nailgun" && other.classname == "player" && other.frags < 1)
+		not_enough = TRUE;
+		else price = 1;
+	if (self.classname == "weapon_supernailgun" && other.classname == "player" && other.frags < 2)
+		not_enough = TRUE;
+		else price = 2;
+	if (self.classname == "weapon_grenadelauncher" && other.classname == "player" && other.frags < 3)
+		not_enough = TRUE;
+		else price = 3;
+	if (self.classname == "weapon_lightning" && other.classname == "player" && other.frags < 4)
+		not_enough = TRUE;
+		else price = 4;
+	if (self.classname == "weapon_rocketlauncher" && other.classname == "player" && other.frags < 5)
+		not_enough = TRUE;
+		else price = 5;
+
+	if (not_enough == TRUE)
+		{
+		centerprint(other, "you cannot afford this weapon\n");
+		return;
+		}
+
+	if (other.classname == "player")
+		other.frags = other.frags - price;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oooh baby. True, this is a bit long, but it's pretty simple. I knew that this only applied to players. I knew each gun had its own price. I knew that if the player did not have enough, then I would have to exit the subroutine. If he did however have enough, I would subtract the gun cost from his "money frags" and go on with the routine, which would give him the weapon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In addition, I knew I wanted this to be an optional deathmatch mode, so I threw the "cvar" part in and put brackets around the whole thing. That way, if the console variable "deathmatch" is not set to seven, everything between those brackets would be ignored.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How did you do? You probably did not come up with code that looks exactly like this, but I hope you got something that works. You might have even written something better than my code.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, if you did something like this, you likely discovered that you can get the weapons from the backpacks dropped by bots. Not a problem. I knew this, so I dropped down to the end of items.qc and found this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+===============
+DropBackpack
+===============
+*/
+void() DropBackpack =
+{
+	local entity	item;
+
+	if (!(self.ammo_shells + self.ammo_nails + self.ammo_rockets + self.ammo_cells))
+		return;	// nothing in it
+
+	item = spawn();
+	item.origin = self.origin - '0 0 24';
+	
+	item.items = self.weapon;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I wanted a quick, easy solution. In other words, I wanted a hack. I wanted the backpack to contain no weapons, so I changed that last line to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 7)
+		item.items = 0;
+		else item.items = self.weapon;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That'll do it. If the mode is set, backpacks will never contain guns.<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That brings this project to a close. It was kind of hard, but I know you did alright. You'll be glad to know that there is only one homework assignment left. And it'll really be something. <P>
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

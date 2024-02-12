@@ -1,0 +1,151 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Circle Strafing</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Probably the single most important technique in deathmatching is the circle strafe. If you can't do this, you likely suck. I suck, and I can still do this. You have to, or even bots will boot your arse.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Which means that if a bot circle strafes, he is presumably a good deathmatch opponent (witness the Reaper). Naturally, we want our bot to do this, so today we will.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Okay, so he won't truly circle strafe; he will "square strafe." This accomplishes the same effect while being much, much simpler, and we here at the AI Cafe like simple.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, we will have to create a new variable to store where the bot is along the circle he will make, so he knows when to change direction. Open up defs.qc and drop to the very bottom. There, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.float strafe_count;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a simple number variable. Nothing to worry about. Call it a memory variable, if you like. Save and close that file.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, your bot will end up moving in four different directions, thus we need to write some support subroutines for that now. Somewhere before the routine bot_strafe(), paste these things:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() walk_forward =
+// ----------------------
+{
+	walkmove(self.angles_y, 20);
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * self.speed;
+};
+
+// ----------------------
+void() walk_left =
+// ----------------------
+{
+	walkmove(self.angles_y + 90, 20);
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_right * self.speed * -1;
+};
+
+// ----------------------
+void() walk_right =
+// ----------------------
+{
+	walkmove(self.angles_y - 90, 20);
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_right * self.speed;
+};
+
+// ----------------------
+void() walk_backward =
+// ----------------------
+{
+	walkmove (self.angles_y - 180, 20);
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * self.speed * -1;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: these subroutines are to be used with the <A HREF="speed.htm">bot speed system</A>. If you have not done that lesson, go back and do it now; it may be the single most important tutorial I've written. This circle strafe routine would probably suck without it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay then. These four routines are self-explanatory. They push the bot left, right, backward, or forward using walkmove() and the velocity stored in his self.speed variable. And remember, you can call these subs from anywhere in your code, anytime you want to move him in one of these directions.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We now can write the circle strafe technique. After the four previous subs, but before bot_strafe(), paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// --------------------------------
+void() circle_strafe =
+// --------------------------------
+{
+
+	bot_face();
+
+	if (self.strafe_count > 1 && self.strafe_count <= 1.5)
+		walk_left();
+	if (self.strafe_count > 1.5 && self.strafe_count <= 2 && vlen(self.enemy.origin - self.origin) > 250)
+		walk_forward();
+
+	if (self.strafe_count <= 0.5)
+		walk_right();
+	if (self.strafe_count > 0.5 && self.strafe_count <= 1)
+		walk_backward();
+
+	self.strafe_count = self.strafe_count + 0.1;
+
+	if (self.strafe_count > 2)
+		self.strafe_count = 0;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uh huh. As always, this subroutine is right to the point. The bot adds 0.1 to his self.strafe_count each frame. If that count is less than or equal to 0.5, he strafes right. If the count is more than 0.5 and less than or equal to 1.0, he strafes backward. Etc, etc.<BR> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When he has completed the "circle" and his self.strafe_count is more than 2, he resets it to 0 and strarts it all again. And that is how your bot can circle strafe.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, he is couting the number of times he is strafing right, walking backward, strafing left, etc. In other words, we have given him the memory to form a circle.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currently, the bot will complete a pretty small, tight circle, which I find works well since most Quake deathmatch maps are small and narrow. However, you can make your bot execute a wider circle by increasing the number values. That is, change 0.5 to 1, 1 to 2, 2 to 4, and so on. Experiment to suit your taste, but I do recommend the current ranges.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: the vlen() part will check to see how close he is to his enemy. If he is too close, he will not strafe forward. This way he does not hurt himself with explosive weapons.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The last step we must do is to call the circle_strafe() routine. Here is where you can use your judgment. Your bot can use this technique any time you want him to, at a certain skill level, in a certain class, whatever. If you want him to do it all the time, go to the sub bot_strafe(), which starts like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() bot_strafe =
+// ----------------------
+{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After the bracket, add the following lines ...<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	circle_strafe();
+	return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here your bot will circle strafe, and then leave the subroutine. He will do nothing else. I leave it up to you to fine-tune this.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This circle strafing can be pretty lethal, especially if the bot's self.speed is 400 or more. To all you sucky players, don't say I didn't warn you.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. memory is a powerful tool for the bot<BR>
+2. vlen() checks for distances<BR>
+3. counting and increasing numbers is at the heart of any coding<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

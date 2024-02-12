@@ -1,0 +1,169 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Random Weapon Feature</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, it feels like I have to oil my fingers; my last tutorial came so long ago that they seem rusty.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nevertheless, here I am, squeeky fingers and all. I have a different kind of lesson for you, one which deals with general QuakeC stuff as opposed to AI routines. I think it's pretty interesting stuff, though, and it will add more replay value to those aging Quake maps.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We will be creating a random weapon feature. In other words, weapons in the level will be randomly chosen and will be different every time you load the map. Not a big deal, but it proves simple to do, and it's kind of fun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course all map entities are born through what we call "spawn routines" like item_shells() and weapon_lightning(). Note that the name of the spawn routine is the classname for the item, spelled <I>exactly</I> the same.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Thus if you wanted to create your own custom map entity, say one named item_crackpipe, you would place this in the level. Next you would write in your code a routine with the same name, which might look something like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() item_crackpipe =
+{
+	setmodel(self, "progs/cracpipe.mdl");
+	setsize(self, VEC_HULL_MIN, VEC_HULL_MAX);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This would give your crackpipe a model and a size, thereby letting it be born into the Quake world. Remember that here the "self" entity is the pipe. Happy smoking.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now onto much more serious and academic matters. You can guess by now that each weapon has its own spawn routine. Well, we're going to screw with this routine. In fact we're going to interrupt it altogether, since we want to randomize which gun appears.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up the file items.qc, where most of the spawn routines appear. All of the subroutines we will be changing begin with "void() weapon_" and end with the names of the guns, which you should know by now. Scroll down about to the middle of the file, where you will see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*QUAKED weapon_supershotgun (0 .5 .8) (-16 -16 0) (16 16 32)
+*/
+
+void() weapon_supershotgun =
+{
+	precache_model ("progs/g_shot.mdl");
+	setmodel (self, "progs/g_shot.mdl");
+	self.weapon = IT_SUPER_SHOTGUN;
+	self.netname = "Double-barrelled Shotgun";
+	self.touch = weapon_touch;
+	setsize (self, '-16 -16 0', '16 16 56');
+	StartItem ();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is the first of six spawn routines for the weapons which show up on the maps. It initializes the super shotgun, as you can see. We want to stop it before it does this. Thus we will add something after the bracket, like such:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*QUAKED weapon_supershotgun (0 .5 .8) (-16 -16 0) (16 16 32)
+*/
+
+void() weapon_supershotgun =
+{
+
+	if (cvar("deathmatch") == 15)
+		{
+		random_weapon();
+		return;
+		}
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If the console variable named "deathmatch is set to 15 -- our new random gun mode -- then we interrupt the subroutine, call our own, and leave. And we didn't even break a sweat.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, now do me a favor: add this new if/then block to the other five weapon spawn routines. It's silly of me to include them all here when all we have to do is make that simple alteration. Got it? Good.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Since we call a new routine, we have to go and write one (damn). It will be easy, though. Simply put, our new code will make a random number, and create a particular weapon based on that outcome. Period. The subroutine will be lengthy, but don't let that scare you; it's only because we must copy all the initialization code from each gun's spawn routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before the routine weapon_supershotgun(), paste all this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() random_weapon =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float r;
+
+	r = floor(random() * 6);
+
+	if (r == 0)
+		{
+		precache_model ("progs/g_shot.mdl");
+		setmodel (self, "progs/g_shot.mdl");
+		self.weapon = IT_SUPER_SHOTGUN;
+		self.netname = "Double-barrelled Shotgun";
+		self.classname = "weapon_supershotgun";
+		}
+	if (r == 1)
+		{
+		precache_model ("progs/g_nail.mdl");
+		setmodel (self, "progs/g_nail.mdl");
+		self.weapon = IT_NAILGUN;
+		self.netname = "nailgun";
+		self.classname = "weapon_nailgun";
+		}
+	if (r == 2)
+		{
+		precache_model ("progs/g_nail2.mdl");
+		setmodel (self, "progs/g_nail2.mdl");
+		self.weapon = IT_SUPER_NAILGUN;
+		self.netname = "Super Nailgun";
+		self.classname = "weapon_supernailgun";
+		}
+	if (r == 3)
+		{
+		precache_model ("progs/g_rock.mdl");
+		setmodel (self, "progs/g_rock.mdl");
+		self.weapon = 3;
+		self.netname = "Grenade Launcher";
+		self.classname = "weapon_grenadelauncher";
+		}
+	if (r == 4)
+		{
+		precache_model ("progs/g_rock2.mdl");
+		setmodel (self, "progs/g_rock2.mdl");
+		self.weapon = 3;
+		self.netname = "Rocket Launcher";
+		self.classname = "weapon_rocketlauncher";
+		}
+	if (r == 5)
+		{
+		precache_model ("progs/g_light.mdl");
+		setmodel (self, "progs/g_light.mdl");
+		self.weapon = 3;
+		self.netname = "Thunderbolt";
+		self.classname = "weapon_lightning";
+		}
+
+	self.touch = weapon_touch;
+	setsize (self, '-16 -16 0', '16 16 56');
+	StartItem ();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Told you it was simple. Pick a random integer. Initialize a weapon. Finish the entity. Add a bracket and semi-colon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, note that we must include the classname for each weapon. This is very important, since it is already given a classname in the map file, yet we will be changing the gun that shows up in the game. Second, the last three lines of this sub are common to all six spawn routines, so I included them at the end instead of repeating then in every if/then block. I'm so darn efficient.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can conclude, this lesson did not take a load of brain power. Just remember to set "deathmatch" to 15 via the console to enable this new feature.<BR> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, I know you love reading my writing, and you wish I'd go on for another ten pages. I hate to disappoint you, but get out the fork, because this turkey is done.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. map entities are born via spawn routines<BR>
+2. these routines have the same name as the map entities<BR>
+3. to create a custom entity, you must write a spawn routine for it<BR>
+4. altering the spawn routine will change the entity itself<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+
+</BODY>
+</HTML>

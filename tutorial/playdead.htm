@@ -1,0 +1,154 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Play Dead</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You're going to love this lesson. I figured that after that long and messy bot items tutorial that we needed a short and sweet one. This is the one.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After this our bot will sometimes fall down when he gets hurt. You can call it getting knocked unconscious or playing dead. Either way, it is very cool.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Crack open tutor.qc and scroll down to bot_pain(), which looks like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void(entity attacker, float damage)	bot_pain =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before that routine, we want to paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_fall1		=[	$deatha1,	bot_fall2	] {self.pain_finished = time + 18; self.solid = SOLID_NOT;};
+void()  bot_fall2		=[	$deatha2,	bot_fall3	] {};
+void()  bot_fall3		=[	$deatha3,	bot_fall4	] {};
+void()  bot_fall4		=[	$deatha4,	bot_fall5	] {};
+void()  bot_fall5		=[	$deatha5,	bot_fall6	] {};
+void()  bot_fall6		=[	$deatha6,	bot_fall7	] {};
+void()  bot_fall7		=[	$deatha7,	bot_fall8	] {};
+void()  bot_fall8		=[	$deatha8,	bot_fall9	] {};
+void()  bot_fall9		=[	$deatha9,	bot_fall10	] {};
+void()  bot_fall10		=[	$deatha10,	bot_fall11	] {};
+void()  bot_fall11		=[	$deatha11,	bot_fall12	] {};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a new animation sequence with old frames. The frames come directly from the scene bot_deatha1(). In other words, when he falls down, it looks like he's dying.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There are three things to look at here. One, we set his self.pain_finished to 18 seconds, the time he will be laying down. Two, we make him non-solid, so you can't shoot him when he's down. Three, the last line refers to "bot_fall12" which isn't here. So I guess we have to make it. Before that sequence, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_fall12 =
+{
+	self.enemy = world;
+	self.goalentity = world;
+	self.think = bot_rise1;
+	self.nextthink = time + 15;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cool stuff. This clears his variables, so when he gets up, he won't be mad at anyone (in case they left). This also tells him to think the routine bot_rise1() 15 seconds from now. He'll stay still during that time. Now we have to make the rising scene. Paste the following code *before* the previous code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_rise1		=[	$deatha11,	bot_rise2	] {self.solid = SOLID_SLIDEBOX;};
+void()  bot_rise2		=[	$deatha10,	bot_rise3	] {};
+void()  bot_rise3		=[	$deatha9,	bot_rise4	] {};
+void()  bot_rise4		=[	$deatha8,	bot_rise5	] {};
+void()  bot_rise5		=[	$deatha7,	bot_rise6	] {};
+void()  bot_rise6		=[	$deatha6,	bot_rise7	] {};
+void()  bot_rise7		=[	$deatha5,	bot_rise8	] {};
+void()  bot_rise8		=[	$deatha4,	bot_rise9	] {};
+void()  bot_rise9		=[	$deatha3,	bot_rise10	] {};
+void()  bot_rise10		=[	$deatha2,	bot_rise11	] {};
+void()  bot_rise11		=[	$deatha1,	bot_rise12	] {};
+void()  bot_rise12		=[	$stand1,	bot_walk1	] {};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I just love working with animation; it's so fun. Here all I did was renumber the death sequence to play in reverse, so it looks like he's getting up off the ground. Also, we make him solid again, and we tell him to return to his walking routine, bot_walk1(), when he's done.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we have to tell the bot when to fall over. Look inside the routine bot_pain(), where you'll see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.pain_finished > time)
+		return;
+
+	if (random() < 0.25)
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (random() <= 0.02)
+		{
+		bot_fall1();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So he will get knocked down according to a random number. This 0.02 value may be too frequent or too seldom for you; please feel feel to change it. The bot will now ocassionally get knocked unconscious.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One last change, though. We want other bots to stop fighting him when he falls over. Go into bot_run(), where you'll see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (visible(self.enemy))
+		self.search_time = time + 6;
+
+	if (time > self.search_time || self.enemy.health <= 0)
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The last line is what we're looking at; it's where he gives up fighting if he's been searching too long or if his enemy died. We need to add to that, so change the last line to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time > self.search_time || self.enemy.health <= 0 || self.enemy.solid == SOLID_NOT)
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That'll do the trick. Now bots will give up on other bots who fall unconscious. Pretty neat, huh? How many bots do that?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Speaking of neat, there is one more little thing we can do to really make our bot play dead. It requires that you have done the previous tutorial on exploding backpacks. In the routine bot_fall1(), where we make the bot non-solid, we can add a call to drop_fake_backpack(). It will look like this wehen we're done:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_fall1		=[	$deatha1,	bot_fall2	] {self.pain_finished = time + 18; self.solid = SOLID_NOT; drop_fake_backpack();};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now, when the bot plays dead, he will throw an exploding backpack! His killer will go for it and be gibbed. You're probably thinking, "Damn Coffee, you must've had this planned!" And you'd be right. Enjoy.<BR>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. We can rearrange the player frames into new animation scenes<BR>
+2. You can't hurt an object that is SOLID_NOT<BR>
+3. Animation sequences can be tricky to work with<BR> 
+4. Animation sequences happen every 0.1 seconds<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

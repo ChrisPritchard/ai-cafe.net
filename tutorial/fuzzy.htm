@@ -1,0 +1,207 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Fuzzy Logic</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The definition of fuzzy logic is eh, somewhat fuzzy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I have spotted that fancy AI term in the readme.txt files of certain deathmatch bots. Oh, it looked very classy, very sophisticated. But I knew it probably didn't apply, because fuzzy logic is more than a couple nested if-then statements.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;True, the term is easy to invoke. Fuzzy logic <B>can</B> mean that your bot makes slightly different decisions in certain situations. In a way, we have seen fuzzy logic tutorials here at the Cafe: when the bot doesn't always choose the rocket launcher as his preferred weapon, that's kinda fuzzy, right? For instance, if we peer into bot_bestweapon(), we see some straight-up black-and-white decision-making:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.ammo_rockets > 0 && (self.items & IT_ROCKET_LAUNCHER))
+		return IT_ROCKET_LAUNCHER;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But, we can screw with that a bit and come up with a butt-simple form of fuzzy logic:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.ammo_rockets > 0 && (self.items & IT_ROCKET_LAUNCHER) && self.health < 50)
+		return IT_ROCKET_LAUNCHER;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this example, the bot says "If my health is pretty good, then I don't really need to carry the rocket launcher." Thus, he will not always act perfectly, think perfectly. He won't always make the same decision.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And so we have devised an amateur's definition of fuzzy logic: the instance when an AI entity examines several criteria to come up with different decisions for the same situation.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, you're probably thinking if that's what fuzzy logic means, then we all have implemented it in our bots, right? Well, to me, it means more than that. It involves examining the success or failure of previous decisions in that situation. It includes weighing the importance of potential outcomes. It's what academics at Carnegie Mellon University (which is right down the street from me, by the way) do.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For instance, the academic site <A HREF="http://www.flll.uni-linz.ac.at/pdw/fuzzy/index.html">Fuzzy Logic Laboratorium</A> defines it this way: "Fuzzy Logic is basically a multivalued logic that allows intermediate values to be defined between conventional evaluations like yes/no, true/false, black/white, etc. Notions like rather warm or pretty cold can be formulated mathematically and processed by computers. In this way an attempt is made to apply a more human-like way of thinking in the programming of computers." Try fitting that into your readme.txt file.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;However, we have come up with a simple and fun version of it, and we can work with that. Let us return to our best weapon example. We want to make our fuzzy logic a bit more hardcore. We can make it look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.ammo_rockets > 0 && (self.items & IT_ROCKET_LAUNCHER))
+		{
+		local float chance;
+ 		if (self.health > 50)
+			chance = chance + 1;
+ 		if (self.frags > 10)
+			chance = chance + 1;
+ 		if (cvar("skill") < 2)
+			chance = chance + 1;
+ 		if (floor(random() * chance) == 0)
+			return IT_ROCKET_LAUNCHER;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, that's pretty fuzzy. What we have done here is literally to build a small decision-making machine. We look at three criteria to formulate the likelihood of the bot choosing the rocket launcher. As the float chance gets higher, the bot is less likely to select this gun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If his health is pretty good, chance goes up. If his frags are pretty good, chance goes up. And if the console variable "skill" is one or two, chance goes up. Then we generate a random number from zero to the value of chance. If that number is zero, he will choose the weapon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See? The higher chance is, the less likely that the random number will come out zero. If all three of these criteria are true, chance will be three, which means the bot will probably not select the gun. If none are true, he will select it for sure.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The cool thing about this code is that, even in his least likely situation, he may <B>still</B> choose the rocket launcher. It will not always return the same decision. It will use fuzzy logic.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The one hitch is that all this decision-making is kind of overkill for merely selecting a weapon. The player may never notice this AI. Carrying the rocket launcher may or may not result in a frag for the bot. Oh well.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We now possess a good grasp of what fuzzy logic means, and we now know of a neat way to implement it. We now must find a cool situation in which to utilize it.<BR> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What is the most critical point in deathmatch? Yep, combat.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That is the time when the bot's intelligence will be most noticeable, so it's a splendid place to insert some fuzzy logic. Here I will assume that you have a list of bot fighting styles availible, ranging from lame to lethal. I will also assume that you have implemented my variable bot speed system. If you haven't, I have a tall hat and a corner for you to sit in.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay. Our bot will use his fuzzy logic immediately after he spots an enemy. We want him to "size up" this opponent and adjust his combat tactics accordingly. In both bot_look_for_players() and bot_look_for_bots() you will see a line reading FoundTarget(). After these lines, add this (if you want):<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	size_up_enemy();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here he calls his new logic routine. Now we must write it. Before the previous two routines, add this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() size_up_enemy =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float danger;
+
+	if (self.enemy.frags > self.frags)
+		danger = danger + 1;
+	if (self.enemy.frags > self.frags + 5)
+		danger = danger + 2;
+	if (self.frags < 10)
+		danger = danger + 1;
+	if (self.enemy.health > self.health)
+		danger = danger + 1;
+	if (self.health < 25)
+		danger = danger + 1;
+	if (self.enemy.weapon == IT_LIGHTNING)
+		danger = danger + 2;
+	if (self.enemy.weapon == IT_LIGHTNING && self.enemy.ammo_cells > 50)
+		danger = danger + 1;
+	if (self.enemy.weapon == IT_ROCKET_LAUNCHER)
+		danger = danger + 3;
+	if (self.enemy.weapon == IT_ROCKET_LAUNCHER && self.enemy.ammo_rockets > 10)
+		danger = danger + 1;
+	if (self.weapon != IT_ROCKET_LAUNCHER)
+		danger = danger + 1;
+	if (cvar("skill") > 2)
+		danger = danger + 1;
+	if ((self.enemy.items & IT_INVINCIBLE))
+		danger = danger + 2;
+	if ((self.enemy.items & IT_QUAD))
+		danger = danger + 1;
+
+//	18 possible danger points
+
+	if (danger < 4)
+		{
+		self.speed = 100;
+		self.attack_state = STANDING_STILL;
+		return;
+		}
+	if (danger < 8)
+		{
+		self.speed = 200;
+		self.attack_state = RUNNING_FOR_COVER
+		return;
+		}
+	if (danger < 12)
+		{
+		self.speed = 300;
+		self.attack_state = STRAFING;
+		return;
+		}
+	if (danger < 14)
+		{
+		self.speed = 400;
+		self.attack_state = CIRCLING;
+		return;
+		}
+
+	self.speed = 500;
+	self.attack_state = CHASING;
+
+};
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Isn't that special, a fuzzy logic routine. What's happening here is rather simple: the more dangerous the situation is, the tougher the bot chooses to be.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm not going to go into all of the criteria; obviously there are quite a few. Let's look at an English explanation:<P>
+
+<FONT COLOR="DFBFFF" FACE="System">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If a threatening condition is true, then my danger goes up. If my danger ends up low, I'll take it easy and run slowly. If my danger is high, I'll choose a deadly tactic and run quickly."<P>
+</FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple enough to me. One cool thing about this system is that the danger conditions are weighted; for instance, if the enemy's weapon is a rocket launcher, we add three points instead of one to his danger.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Another cool thing is that he adjusts his running speed. You may not like this; you may think it's cheating. But you have to agree that it will make a huge difference during battle (bots should have some advantages). Moreover, he won't really run fast unless the player is very good anyway.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may not agree with my ranking of the attack patterns, either. In other words, you may think strafing is deadlier than chasing. That's fine, just change it. The fact is that it's hard to decide which is more lethal.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, you get the picture. You may not use any of this, but you can still see how to implement fuzzy logic in a useful way. You may even have other, deadlier fighting styles. Or you may want to add in new danger criteria. Please do so if you wish.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One last note about this routine: you will notice that it sets your bot's .attack_state variable. Because of this, your bot_strafe() subroutine would have to look something like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_strafe =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	if (self.attack_state == STANDING_STILL)
+		return;
+	if (self.attack_state == RUNNING_FOR_COVER)
+		run_for_cover();
+	if (self.attack_state == STRAFING)
+		bot_run_slide();
+	if (self.attack_state == CIRCLING)
+		circle_enemy();
+	if (self.attack_state == CHASING)
+		chase_enemy();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mmmmm yep. Obviously, fuzzy logic can be applied to many different decisions that the bot makes. Also, the criteria you examine in your logic can get very long and complicated; make sure your bot doesn't analyze trivial data that the player would never ever consider. Your AI should be as visible -- yet tough -- as possible. Don't make your bot so fuzzy that he's easy to defeat.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I like the size_up_enemy() idea, if not the routine, and I'll tell you why. Bot difficulty is crucial, but the bots don't know that. When the Omicron Bot beats me 50-2 while running rings around me, I just want to delete him from my hard drive.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yet I do enjoy bots a little bit tougher than me, bots whose frags are just a few more than mine. I think it's dramatic and inspiring to lose every once in a while. If I can catch up, I'll try. If I can't catch up, I'll give up.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With size_up_enemy(), your bot will adjust his difficulty depending on my performance. Moreover, the bot will not make the same decision all the time. To me, the bot will appear as though he is considering things realistically, as opposed to using that boring "if-then" thinking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That makes me feel warm, and, eh, fuzzy.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. fuzzy logic is more complicated than some guys think<BR>
+2. fuzzy logic is less complicated than some guys think<BR>
+3. it really means looking at external criteria to formulate varying decisions<BR>
+4. it also means that the bot won't make decisions in black or white<BR>
+5. our best use for fuzzy logic lies in bot difficulty<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

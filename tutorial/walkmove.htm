@@ -1,0 +1,148 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Walkmove Navigation</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ahh, navigation. That most pesky of all AI challenges. The bane of my existence. That which has sucked away months of my life.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, map navigation proves an immense, if not insurmountable problem. There actually may be no solution to it in QuakeC, although the Reaper and waypoints are admirable attempts. If you know me, you know my philosophy: make your navigation as good as you can, then quit. If you are not a test-tube human genetically engineered to live a thousand years, then you will have time in your life for only one of the followings things: creating the perfect bot navigation, or finishing your bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'd rather see you achieve the second. With that said, I will offer an alternative mode of navigation for the Tutor Bot, which in his native state uses a combination of coffee_move() and movetogoal(). Please note the word alternative; the following code may not be better, just different.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I have discovered that with navigation, you have to use a little of this and a bit of that. Thus, even if you do not implement the following method, you may learn from seeing a different way of doing things. You may even cut and paste certain bits of it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We are going to be working with walkmove(), which merely pushes a bot a certain number of units in a certain direction. This is different from movetogoal(), which does its own primitive navigation.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The benefit to walkmove() is that it's fast and direct; movetogoal() can cause the bot to wander around, sometimes in the opposite direction of his goal entity. The disadvantage to walkmove() is that if we don't monitor it closely, it will get the bot stuck often.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We will begin with the heart and brain of our lesson, the new routine bot_walkmove(), which you should paste above bot_walk():
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() back_up1;
+
+
+// -----------------------------------------
+void() bot_walkmove =
+// -----------------------------------------
+{
+
+	self.angles_y = vectoyaw(self.goalentity.origin - self.origin);
+
+	if (walkmove(self.angles_y, 20) == FALSE)
+		{
+		if (random() < 0.3)
+			{
+			back_up1();
+			return;
+			}
+		}
+		else
+			{
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			makevectors(self.angles);
+			self.velocity = self.velocity + (v_forward * self.speed);
+			return;
+			}	
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity_z = 250;
+	makevectors(self.angles);
+	self.velocity = v_forward * -250;
+	if (random() < 0.4)
+		self.velocity = self.velocity + (v_right * 250);
+		else self.velocity = self.velocity + (v_right * -250);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There is a lot to explain here, so we'll take it step by step in plain talk, from the bot's point of view:<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I will turn to face my goal entity.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If I cannot walk in my current direction and if a random number is less than 0.3, I will execute my new animation script called back_up1(), then leave.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If I can walk in my current direction, then I will push myself forward with my velocity code, and leave.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If I am still in the routine, that means I still cannot walk in my current direction. So, I will try the simplest solution. I will jump upward, backward, and possibly to the left or right. Maybe I can get unstuck this way.<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, that was a mouthful, especially for a bot. Hope you understood it all. True, it relies a little to much on random values, but when it comes to navigation, every situation is different. Sometimes the bot needs a push, sometimes he needs a pull.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You too can tweak this routine after you see it in action. You may find a better balance of things, or you may add your own techniques.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again, remember that when a bot runs into an obstacle , he runs straight into it; movetogoal() won't save him here. We have to get him around that obstacle ourselves. One way is the random jump. The other is the script back_up1(), which we now have to include. Go to the end of your animation section, and paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  back_up1		=[	$rockrun1,	back_up2	] {walkmove(self.angles_y - 180, 20);};
+void()  back_up2		=[	$rockrun2,	back_up3	] {walkmove(self.angles_y - 180, 20);};
+void()  back_up3		=[	$rockrun3,	back_up4	] {walkmove(self.angles_y - 180, 20);};
+void()  back_up4		=[	$rockrun4,	back_up5	] {walkmove(self.angles_y - 180, 20);};
+void()  back_up5		=[	$rockrun5,	back_up6	] {walkmove(self.angles_y - 180, 20);};
+void()  back_up6		=[	$rockrun1,	back_up7	] {walkmove(self.angles_y - 90, 20);};
+void()  back_up7		=[	$rockrun2,	back_up8	] {walkmove(self.angles_y - 90, 20);};
+void()  back_up8		=[	$rockrun3,	back_up9	] {walkmove(self.angles_y - 90, 20);};
+void()  back_up9		=[	$rockrun4,	back_up10	] {walkmove(self.angles_y - 90, 20);};
+void()  back_up10		=[	$rockrun5,	bot_walk1	] {walkmove(self.angles_y - 90, 20);};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yeah, this is weird alright. It's a one second script. What it will do is to make the bot back up for half a second, then move to the side for another half second. This is a bit similar to what we did in our improved swimming tutorial.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The reason why we have made this into a script is that this is the easiest way to tell the bot to perform a certain number of tasks at a certain time. Here he is actually backing away from the wall, then sliding along it. The goal, of course, is to get around that wall or obstacle.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This may or may not be successful. All level are shaped differently. We must throw everything we can at a potential obstacle. All we should care about is getting the bot to where he's going.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And so what if this script isn't perfect. I'm not going to do all the work; you can finish it. Make it longer. Make it shorter. Add AI to each frame. Do what it takes.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Take note that the bot does not check for enemies nor does he implement his velocity code in the script; it is yours to customize as you will.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Go next to the routine bot_walk(), the bottom of which appears like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// of course movetogoal() is id's C function, it moves randomly
+// toward what his self.goalentity is; don't let it worry you,
+// this function takes a long time to get where its going
+// the coffee_move is his cool running function
+
+	if (self.goalentity != world)
+		movetogoal(20);
+		else coffee_move();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Change the end to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.goalentity != world)
+		bot_walkmove();
+		else coffee_move();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So we got rid of movetogoal() in favor of our new technique. We are done, whether you like it or not.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This tutorial can be summed up in the following way: if the bot's goal entity is nearby, this new method will prove superior to movetogoal(), yet the more obstacles the entity has in front of it, the less effective it will be.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For this and other reasons, I think bot_walkmove() is valid. Perhaps you choose only to use it a portion of the time, combining it with both movetogoal() and coffee_move(). Maybe you got an idea for a better method. Whatever you do, don't spend a lifetime on it. Finish the damn bot already.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Walkmove is faster than movetogoal()<BR>
+2. Movetogoal() can get a little wacky<BR>
+3. Scripts can help us with navigation<BR>
+4. Navigation is best conquered with a variety of solutions<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+
+</BODY>
+</HTML>

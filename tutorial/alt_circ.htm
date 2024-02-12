@@ -1,0 +1,196 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Win98 notepad">
+   <meta name="author" content="Nolan Irving">
+   <title>AI Tutorial</title>
+</head>
+<body text="#FFFFFF" bgcolor="#0080C0" link="#DFBFFF" vlink="#DFBFFF" alink="#DFBFFF">
+
+
+<hr SIZE=3 WIDTH=100% ALIGN=Center>
+<center><font face="Impact"><font size=+3>Alternate Circle Strafing</font></font></center>
+
+<hr SIZE=3 WIDTH=100% ALIGN=Center>
+<br>&nbsp;
+<p><FONT FACE="MS Sans Serif" SIZE=3>A while back I was looking at Coffee's tutorial on circle strafing for bots. I have no objection to bots running circles around me, but the code seemed rather long-winded, all things considered. So I went digging through some of my old code and dusted off a function or two. After a bit of hammering and sawing I fit them into the tutorbot source, and now I'm ready to share my so-called wisdom with you.
+<p>What we're going to do is fairly simple. First, have the bot check to see if it can see the player. If it can, turn toward the player and use makevectors on the bot's .angle. This sets the global variables v_forward, v_up, and v_right, which all have a length of one and point forward, upwards, and right along the bot's line of sight, respectively. To make the bot circle around the player, we'll just make it move in the direction v_right is pointing. Let's begin, shall we?
+<p>First open up defs.qc, and at the bottom add the line<BR><BR>
+<font face="System" color="#DFBFFF">.float strafe_dir;</font><BR><BR>
+This is going to hold the direction the bot will strafe in (either clockwise or counterclockwise).
+<p>Now open
+up tutor.qc (I bet you're surprised to hear that), and scroll down to create_bot(float
+teem). At the end, add the line<BR><BR>
+<font face="System" color="#DFBFFF">bot.strafe_dir = 1;</font><BR><BR>
+<p>Now it's
+time to actually write this function. Just above bot_strafe, add this:</font><BR>
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+// ****************************************
+//          Rabies circle strafe
+
+.float strafe_dir;
+
+void () offground =
+{
+        self.flags = self.flags - (self.flags & FL_ONGROUND);
+};
+
+float BOT_SPEED = 500;
+float CIRCLE_DISTANCE = 250;
+
+void () bot_circle_strafe = 
+{
+        local vector v;
+
+        // exit function if no enemy, or enemy not visible
+        if (self.enemy == world)
+                return;
+
+        traceline(self.origin, self.enemy.origin, FALSE, self);
+
+        // HACK!  For some reason trace_fraction was less than 1 when bot
+        // was less than 200 units away
+        if ((trace_fraction != 1.0) && (vlen(self.origin - self.enemy.origin) > 200)) 
+                return;
+	
+        // calculate angle to enemy
+        v = self.enemy.origin - self.origin;
+        self.angles_y = vectoyaw(v);
+        makevectors(self.angles);
+
+        // set velocity perpendicular to heading and remove onground flag
+        self.velocity = v_right * BOT_SPEED * self.strafe_dir;
+        offground();
+
+        // check for walls and reverse direction if necessary
+        traceline(self.origin, self.origin + 50 * v_right * self.strafe_dir, FALSE, self);
+        if (trace_fraction != 1.0)
+                self.strafe_dir = -1 * self.strafe_dir;
+
+        // change strafe direction
+        if (random() < 0.1)
+                self.strafe_dir = -1 * self.strafe_dir;
+
+        return;
+};
+</pre></font><BR>
+<FONT FACE="MS Sans Serif" SIZE=3>Now replace bot_strafe() with this:</font>
+<PRE><font face="System" color="#DFBFFF" size=+0>
+void () bot_strafe =
+{
+local vector v;
+	
+        // calculate angle to enemy
+        v = self.enemy.origin - self.origin;
+        self.angles_y = vectoyaw(v);
+        makevectors(self.angles);
+
+        bot_circle_strafe();
+
+        // move toward enemy unless close
+        if (vlen(v) > CIRCLE_DISTANCE)
+                self.velocity = self.velocity + BOT_SPEED * v_forward;
+
+        bot_face();
+        bot_check_ammo();
+
+        // put a cap on the bot's speed
+        if (vlen(self.velocity) > BOT_SPEED)
+                self.velocity = normalize(self.velocity) * BOT_SPEED;
+
+        offground();
+
+        return;
+};
+
+// ****************************************
+//        end Rabies circle strafe
+</pre></font><BR>
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+Ok, by now you're either nodding your head or you're confused. I'll assume the latter so I can feel useful when I write the rest of this tutorial. So let's go through the functions, shall we?
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+	float BOT_SPEED = 500;
+	float CIRCLE_DISTANCE = 250;
+</font></PRE>
+
+Two variables that define how quickly the bot circles around you and what distance it circles at. I chose them because they looked good. The bot seemed to move too slowly with a speed of 320, and too quickly with a speed of 600. You can also play with the circle distance until you get something you like. 250 was far enough that the bot avoided the blast from its missiles (most of the time).
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+	if (self.enemy == world)
+		return;
+
+        traceline(self.origin, self.enemy.origin, FALSE, self);
+        if ((trace_fraction != 1.0) && (vlen(self.origin - self.enemy.origin) > 150))
+		return;
+</PRE></font>
+Makes sure the bot only circle strafes if it has someone to circle strafe around,
+and if the bot can't see its enemy then it won't bother with the rest of the function.
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+        v = self.enemy.origin - self.origin;
+        self.angles_y = vectoyaw(v);
+        makevectors(self.angles);
+</PRE></font>
+Creates a vector v that points in the direction of the bot's enemy, then uses it to calculate the bot's new yaw. Finally, it uses makevectors on the bot's heading  to create a vector that points forward, one that points 90 degrees to the right, and one that points 90 degrees upward. We'll use them in just a second.
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+        self.velocity = v_right * BOT_SPEED * self.strafe_dir;
+        offground();
+</PRE></font>
+If you did the faster running tutorial (and if you didn't, go do it. Right now!), you probably recognize this. It gives the bot a gentle nudge to the right or left, depending on the value of self.strafe_dir. Then it removes the onground flag so the engine will actually move the bot in the given direction.
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+        traceline(self.origin, self.origin + 50 * v_right * self.strafe_dir, FALSE, self);
+        if (trace_fraction != 1.0)
+                self.strafe_dir = -1 * self.strafe_dir;
+</PRE></font>
+This checks in the direction the bot is strafing. If the traceline hits a wall or entity, then change the strafing direction.
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+	if (random() < 0.1)
+		self.strafe_dir = -1 * self.strafe_dir;
+</PRE></font>
+This makes the bot change the circling direction every so often. You can use different values for the random to make it change direction more or less often. Again, 0.1 was chosen because it worked.<P><BR>
+Now for bot_strafe:
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+        v = self.enemy.origin - self.origin;
+        self.angles_y = vectoyaw(v);
+        makevectors(self.angles);
+</PRE></font>
+Same deal as in bot_circle_strafe... calculates angle and normal vector to player.
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+        if (vlen(v) > CIRCLE_DISTANCE)
+                self.velocity = self.velocity + BOT_SPEED * v_forward;
+</font></PRE>
+The original bot_strafe was responsible for moving the bot toward its goal. This does that with velocity code. You can make the circle larger or smaller by changing circle_distance. This code runs blindly forward, regardless of pits or other obstacles in the way.
+
+<PRE><font face="System" color="#DFBFFF" size=+0>
+        if (vlen(self.velocity) > BOT_SPEED)
+                self.velocity = normalize(self.velocity) * BOT_SPEED;
+</font></PRE>
+Players have a speed cap, so we apply it to the bots as well.
+
+Right now you might be thinking "that function only makes the bot run left or right!" That's true, but the bot runs this function every frame and so it constantly recalculates the directions "left" and "right". The end result is a smooth circle once it gets close enough. As a nice side effect, the bot will also strafe as it approaches you as long as it can see you. As a not-so-nice side effect, the bot will occasionally strafe off of a ledge, and it can't climb stairs while it's strafing. Next time, we'll fix that with lots of tracelines. It'll be fun. Trust me.<P>
+Rabies out.<P>
+<CENTER><H3>What We Learned</H3></CENTER>
+1. Circle strafing is not only cool, it's possible using velocity movement<BR>
+2. Vectoyaw and makevectors are both incredibly useful.<BR>
+3. Without the onground flag set, bots (and players) can't climb steps.<BR>
+4. Sometimes I think I'm being simpler than Coffee even though the code require 5 pages of explanation<BR>
+<P><P><P><P>
+
+<CENTER>&nbsp;<P>
+<HR align=center SIZE=3 width="100%">
+Author: Rabies<BR>
+Questions: <A href="mailto:nirving@umr.edu">nirving@umr.edu</A><BR>
+ICQ: 10345116<BR>
+</CENTER></FONT>
+
+</body>
+</html>

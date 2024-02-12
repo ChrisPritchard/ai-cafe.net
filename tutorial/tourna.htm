@@ -1,0 +1,207 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Tournament Mode</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<I>Disclaimer: this is a one-on-one deathmatch mode, so if you're an ADD kid it may bore you. Also, this lesson may require you to make substantial changes to your bot AI if you are interested in fully implementing the mode. I recommend reading the tutorial before adopting it.)</I><P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You know that I've been talking about my unfinished mod called Bot Championship. You know it is a tournament-style botmatch game a bit similar to Quake 3 Arena or Unreal Tournament. Well, I have some bad news and I have some good news.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, the bad news : it's boring. Not totally boring, just very simple. It just doesn't feel like a complete mod, but rather just a new patch or mode. BC does feature some good AI in it, but most of that is coming out via tutorials on the Cafe. Thus, it does not look as though I will be releasing that particular mod.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The good news is that you benefit from my wasted work, my humiliation, my misfortune. Bot Championship might not have been a deep experience unto itself, but it will serve as an excellent deathmatch mode. The mod was based on a very simplistic concept -- bots that progressed in difficulty -- which was executed with very simplistic code. I will teach you that code now.<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For your Tournament Mode to work properly you need a few features in your bot: my variable velocity system, skill-based AI, and multiple skins. As you may remember, the first is implemented through the .speed float. The second may take various forms, including better fighting styles or tighter aiming at high skill levels. The third can be found in skin packs on cdrom.com or the like.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now let me briefly explain our new mode. Frags are lives. Every contestant starts off with three frags, or lives. If you get killed, you lose a life. Lose all three lives and you lose the tournament. When you kill a bot, he loses a life as well. If he loses all three lives, he is eliminated from the competition. A new more difficult bot takes his place. If you eliminate all the bots, you win the contest.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In a way, it's the opposite of Last Man Standing. Obviously, the last bot should be pretty damn hard to kill. In addition, you have to defeat all these guys with only three lives. Note: for simplicity, this tutorial will focus solely on a one-on-one tournament (in other words, only one bot in the game).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, enough with the friggin' talk already. Crack open defs.qc and add this line at the bottom:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+float current_bot_skill;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This variable will hold the value of the number of rockets on each map. Just kidding. I think it's self-explanatory.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, go into tutor.qc and slip down to the subroutine create_bot(). After the bracket, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 12)
+		{
+		local entity bot;
+		bot = find(world, classname, "bot");
+		if (bot != world)
+			{
+			bprint(bot already in game\n");
+			return;
+			}
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This little part checks to see if there is a bot already in the game. If so, we will leave the subroutine, thereby locking any other bots out. (Yes, you could skip this part if you wanted more bots, but you'd be buggin' out your own mod.) Next, add this at the bottom of create_bot():<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 12)
+		{
+		bot.skin = current_bot_skill;
+		current_bot_skill = current_bot_skill + 1;
+		bot.frags = 3;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here we use the current bot skill as the new bot's skin, we increase it by one, and then we set his frags.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scroll a little up to the sub respawn_bot(). We know here that the bot has died or been killed, so we know he has lost a life. We need to check if he has run out of them. At the end, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 12 && self.frags == 0)
+		rise_up_ladder();
+
+	if (cvar("deathmatch") == 12 && self.frags > 0)
+		{
+		self.speed = 200 + (current_skill_level * 30);
+		self.health = 100 + (current_skill_level * 5);
+		self.max_health = self.health;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The bot's lives are zero, so we will eliminate him and bring in the next bot, and thus the player rises up our tounament ladder. If he still has lives, we alter his traits according to the current bot skill level. Assuming that ou start your first bot with a speed of 200 and health of 100, we give him more of each of these characteristics depending on the skill level.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In other words, if his level (and his skin) is 9, he possesses a speed of 470 and health of 145. Of course you can tweak all these values and factors as you see fit.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, we need to write that new routine now. Above the previous sub, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() rise_up_ladder =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	if (current_bot_skill == 15)
+		{
+		local entity plr;
+		plr = find(world, classname, "player");
+		centerprint(plr, "you won the tournament!\n");
+		remove(self);
+		return;
+		}
+
+	bprint("\n");
+	bprint(self.netname);
+	bprint(" is eliminated\n");
+
+	current_bot_skill = current_bot_skill + 1;
+	self.skin = current_bot_skill;
+	self.netname = bot_name();
+	self.frags = 3;
+
+	msgUpdateNameToAll(self.fClientNo, self.netname );
+	msgUpdateColorsToAll(self.fClientNo, self.fShirt, self.fPants );
+	msgUpdateFragsToAll(self.fClientNo, self.frags );
+};
+</FONT>
+</PRE>
+	
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Piece of cake. If the player has killed the sixteeth bot, the last bot, then he has won, and we remove the bot. He then must start a new game. If not, we print a little message, increase the current bot level, and apply those changes to the bot. We are literally changing that bot into a new one by altering his skin and his name.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We utilize the centerprint() statement looks much more dramatic than bprint(). However, centerprint() can only be done to a client's screen; in other words, you have to send it to the player's screen. Thus we have to declare a temporary entity and use it to "find" the player. After that, we can use our fancy print command.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Speaking of his name, we must change your bot naming routine. It should end up looking something like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+string() bot_name =
+// ------------------------------------------------
+{
+
+	if (current_bot_skill == 0) return "Newbie";
+	if (current_bot_skill == 1) return "dewD";
+	if (current_bot_skill == 2) return "Girlie";
+	if (current_bot_skill == 3) return "ê'KANEê'";
+	if (current_bot_skill == 4) return "Devastator";
+	if (current_bot_skill == 5) return "Phatboy";
+	if (current_bot_skill == 6) return "Xeksis";
+	if (current_bot_skill == 7) return "'Sphinxê";
+	if (current_bot_skill == 8) return "Velza";
+	if (current_bot_skill == 9) return "êXÖOÖXÖOÖX'";
+	if (current_bot_skill == 10) return "NeCroSis";
+	if (current_bot_skill == 11) return "Godlike";
+	if (current_bot_skill == 12) return "Killer";
+	if (current_bot_skill == 13) return "Blood-Ó-guts";
+	if (current_bot_skill == 14) return "Wrath";
+	if (current_bot_skill == 15) return "Hades";
+
+};
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Naturally you can change any of the names. The point here is that the name depends on the current ladder level. Um, what next ... oh, yeah, the file client.qc, open that up. First, scroll down to the sub PutClientInServer(). At the end, add this bit:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 12 && time < 3)
+		self.frags = 3;
+
+	if (cvar("deathmatch") == 12 && time > 3 && self.frags == 0)
+		{
+		local entity bot;
+		bot = find(world, classname, "bot");
+		remove(bot);
+		centerprint(self, "you lost the tournament ...\n");
+		}
+</FONT>
+</PRE>
+	
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If it is the beginning of a tournament game, we start the player with three frags. If it is respawning with no lives left, we remove the bot and tell the player he lost. Yes, it is simple, but you can add frills later.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Slide down to the sub ClientObituary() now. After the bracket and the floats, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 12)
+		{
+		if (targ.classname == "player" || targ.classname == "bot")
+			{
+			bprint (targ.netname);
+			bprint (" loses a life\n");
+			targ.frags = targ.frags - 1;
+			msgUpdateFragsToAll (targ.fClientNo, targ.frags);
+			return;
+			}
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have basically interrupted the rest of the routine here. Normally it gives frags to the attacker, yet we want it to subtract a frag from the victim. That is what you see above (you may add more death messages to this). Then we merely leave the sub.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Conceptually and technically, this new mode is all quite simple. You may think it is simple in a bad way, but you are free to expand on it. For instance, in Bot Championship I played cheering or booing crowd sounds depending on how the player performed. I also included tournament-related dialog, as well as an announcer. Plus, it's not that difficult to add more than one bot into the competition.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In any case, it will serve as a unique mode to somebody's bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A couple last notes: I have based this lesson on a player.mdl file with 16 skins in it. If you wish to feature fewer bots or you have fewer skins, you must change the references to the number 15. Secondly, you may increase the number of beginning lives from 3 to a higher value, if you prefer a longer game. Thirdly, your bot's aiming and attacking abilities should relate to his skin. Finally, do not forget to set the console variable "deathmatch" to 12 to enable this mode.<P> 
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Sometimes we must use find() to refer to bots or players<BR>
+2. Temporary entities can help us with that<BR>
+3. We can use a bot's skin to store his skill level<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: <A HREF="mailto:coffee@planetquake.com">Coffee</A><BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</BODY>
+</HTML>

@@ -1,0 +1,80 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Making the Bot Think Faster</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The Reaper reacts quickly. The FrogBot reacts quickly. But the Tutor Bot, he's a bit slow in the head.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I always wondered how most bot, ranging from the Omicron to the CTF Bots, thought so darn fast. Once I even started a new bot from scratch just to try to build him to think faster.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;About a year and 500 lines of programming later, I discovered that all I needed to make the bot react more swiftly was one line of code.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yeah, I know, life is cruel.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The least I can do now is show <B>you</B> that magic line of code. In fact, here it is now:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.nextthink = time + 0.05;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, monsters and some bots think every 0.1 seconds, or every tenth of a second. In other words, they think ten times a second.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is acceptable, of course. But perhaps you want your Tutor Bot to kick a little more butt.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This 0.1 seconds is most always regulated in the bot's animation sequences. But we can override this.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We can just paste the above line of code into both <B>bot_walk()</B>, his navigation routine, and <B>bot_strafe()</B>, his evasion routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For instance, here is what we do with <B>bot_walk()</B>:
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_walk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	
+	self.nextthink = time + 0.05;
+
+// this is his main AI routine, where he will look for items and enemies
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+	bot_look_for_bots();
+	bot_look_for_players();
+	bot_search_for_items();
+	bot_grab_items();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can't get any simpler than one line of code.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What that new line will do is to force the bot to think every 0.05 seconds, which is twice as fast as he normally thinks. He'll really move and groove now.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A few notes. One, don't forget to add that line to <B>bot_strafe()</B> as well, at the beginning.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Secondly, 0.05 is very fast, and he may look jerky. If you don't like this, try changing it to 0.08 or 0.7. Have some fun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lastly, I choose these two routines because he thinks them during each frame. If you selected a different subroutine to put this new line into that he didn't think each frame, he would obviously not see it and therefore not set his nextthink to 0.05.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Time to compile. The Tutor Bot will really scoot now.<BR>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Normal animation sequences happen every 0.1 seconds<BR>
+2. We can override that if we find a routine he calls every frame<BR> 
+3. Sometimes big problems have small solutions<BR>
+3. Put another way, never overthink AI<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

@@ -1,0 +1,318 @@
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Paintball</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I feel like writing a tutorial, so what if I'm at work? No one will see. My boss won't mind. Believe it or not, I've done most of these lessons at work.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The problem is, I can't test this. In fact, I don't even know how it will work. We'll have to find out together.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But my idea is just so cool, I can't help myself. I want to create a Paintball game for our bot. Honestly. Yes, it may be challenging, but we've done a lot of learning by now; we can do it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The rules of our game will be as follows: you can kill players with normal weapons, but you only get one frag. If you find a paintgun and cover an opponent with paint, you earn ten frags. Yeah, that's right.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will be quite a multi-faceted lesson, so let's take a quick peek at what we need, and what we need to do:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	- do player skins with paint on them
+	- create a small model for a paint pellet
+	- invent a paint gun
+	- make it look like you splat paint onto an enemy
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's not to bad, right? I'll make you a deal: I'll create the skins and models we need, and you forgive me for my infamous shortcuts. Deal? Good.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now for one of those infamous shortcuts. The paint gun will obviously be the most important weapon in the game; both the player and the bots need to change to it when they have it. Therefore, we will turn our rocket launcher into our paint gun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Note: yeah, this is lazy and perhaps uncool, but this lesson would be much longer and much harder if we do it the other way. Another note: this tut is designed as a game, not an option, so you won't be able to turn it off.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When a paint pellet hits someone, their skin will be increased by one. They'll go from having no splotches on them to one, to two, and then to three. They'll look rather colorful by then.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again, for the sake of simplicity, we'll use the normal Quake marine skin, and we will use only one shade of paint. Anyhow, let's quit this talking, and get down to some action.<P>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step One.</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Download this <A HREF="paint.zip">paint.zip file here</A>. It contains the file PLAYER.MDL and PELLET.MDL. If C is your hard drive and TUTOR is your Quake program subdirectory, then the models would go in the following subdirectory:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+C:\QUAKE\TUTOR\PROGS
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If yours differs, just remember: wherever your Tutor Bot PROGS.DAT file is, make a \PROGS subdirectory there, and put the two models there. Naturally, PLAYER.MDL is always precached, but we need to do PELLET.MDL. Also, we want to precache another sound, though. Open up weapons.qc and look at W_Precache(), the first subroutine. Right after its first bracket, add this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	precache_model ("progs/pellet.mdl");
+	precache_sound ("zombie/z_miss.wav");
+</FONT>
+</PRE>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step Two.</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Currently, when you pick up the rocket launcher, it prints the message "You got the rocket launcher." I feel that we should change this. Open up items.qc and scroll halfway down to the routine weapon_rocketlauncher(). This is called the spawning function for that weapon. It looks like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*QUAKED weapon_rocketlauncher (0 .5 .8) (-16 -16 0) (16 16 32)
+*/
+
+void() weapon_rocketlauncher =
+{
+	precache_model ("progs/g_rock2.mdl");
+	setmodel (self, "progs/g_rock2.mdl");
+	self.weapon = 3;
+	self.netname = "Rocket Launcher";
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, change that last line to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 6)
+		self.netname = "Paintgun";
+		else self.netname = "Rocket Launcher";
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Woohoo. Save and close.<P>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step Three</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm gonna make life a little harder for you now. We want to make the paintgun firing routine. Open up weapons.qc. Scroll down to W_Attack(), the main firing routine. Add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+vector() bot_aim_at_enemy;
+
+// -----------------------------
+void() fire_paint_pellet = 
+// -----------------------------
+{
+local entity missile;
+
+	sound (self, CHAN_WEAPON, "weapons/grenade.wav", 1, ATTN_NORM);
+
+	missile = spawn ();
+	missile.owner = self;
+	missile.movetype = MOVETYPE_FLYMISSILE;
+	missile.solid = SOLID_BBOX;
+	missile.classname = "pellet";
+
+	if (self.classname == "player")
+		missile.velocity = aim() * 1500;
+		else missile.velocity = bot_aim_at_enemy() * 1500;
+
+	missile.angles = vectoangles(missile.velocity);
+	missile.touch = paint_pellet_touch;
+	missile.nextthink = time + 5;
+	missile.think = SUB_Remove;
+
+	setmodel (missile, "progs/pellet.mdl");
+	setsize (missile, '-1 -1 -1', '1 1 1');
+	setorigin (missile, self.origin + v_forward*8 + '0 0 16');
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hmm, a little bit of trickery here. But not much. Basically I copied this from W_FireRocket(). Then I edited the missile direction part of it. Now both the player and the bot can use the same subroutine. Neat.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, this will create a paint pellet and sent it on its way. It will travel the same speed as a rocket. Seems reasonable. Naturally, we need to create a touch function for it. So before that, paste the following routine:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -----------------------------
+void() paint_pellet_touch = 
+// -----------------------------
+{
+
+	if (other == world)
+		{
+		self.velocity = '0 0 0';
+		self.movetype = MOVETYPE_NONE;
+		self.solid = SOLID_NOT;
+		return;
+		}
+
+	if (other.classname != "player" && other.classname != "bot")
+		return;
+	if (other.health <= 0)
+		return;
+	if (other == self.owner)
+		return;
+
+	sound (self, CHAN_WEAPON, "zombie/z_miss.wav", 1, ATTN_NORM);
+	particle (other.origin, '20 20 20', 148, 25);
+
+	if (other.skin < 2)
+		{
+		other.skin = other.skin + 1;
+		T_Damage (other, self, self.owner, 1);
+		}
+		else
+		{
+		other.deathtype = "paint";
+		T_Damage (other, self, self.owner, 500);
+		}
+
+	remove(self);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oh my God. Do you see what I just did? Would you look at that. Whoa.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Firstly, if the paint pellet hits the world (a wall), then we make it stick, just like paint really would. Secondly, we see if the "other" is a healthy bot or player.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nextly, if his skin is zero or one, we just change it to the one above it. Fourthly, if his skin is two, we mark him as painted, damage the heck out of him so he'll die. Lastly, we remove the pellet.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scroll down into W_Attack() now. You see the call to W_FireRocket() like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	else if (self.weapon == IT_ROCKET_LAUNCHER)
+	{
+		player_rocket1();
+		W_FireRocket();
+		self.attack_finished = time + 0.8;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paste the following over the previous:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	else if (self.weapon == IT_ROCKET_LAUNCHER)
+	{
+		player_rocket1();
+		if (cvar("deathmatch") == 6)
+			fire_paint_pellet();
+			else W_FireRocket();
+		self.attack_finished = time + 0.8;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When the player has the rocket launcher readied and deathmatch set to six, he will fire a pellet instead of a missile. I think that will work. I hope it will work. Remember, I am at work.<P>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step Four</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have to tell the bot to shoot pellets too. What do you say we take another shotcut? Open up tutor.qc. And scroll about halfway down until you see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// =============================
+void() bot_fire_rocket = 
+// -----------------------------
+{
+local entity missile;
+
+	if (self.weapon == IT_GRENADE_LAUNCHER)
+		{
+		bot_fire_grenade();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that stuff, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 6)
+		{
+		fire_paint_pellet();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is what we call a hack. We interrupt his rocket-firing code to fire a pellet. Oh well. You can seperate it or clean it up later.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Do me a favor. Go down to the routine respawn_bot(). We want his skin to be clean when he restarts. At the very end, before the last bracket, add this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 6)
+		self.skin = 0;
+</FONT>
+</PRE>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step Five</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The bot restarts with a clean skin, and the player must as well. Open up client.qc. Go down to the subroutine PutClientInServer(). At the very end, add these lines:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 6)
+		self.skin = 0;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;While we're in here, we might as well add a relevant message of the day, right? Go down to the routine PlayerPostThink(). At the end, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 6 && time < 5)
+		centerprint(self, "Now playing PaintBall!\n");};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Good. Earlier we gave the paint victim a weird "deathtype" thingie, so I guess we must deal with that. Glide down to ClientObituary(), one of my favorite subroutines. It shall look like so:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+===========
+ClientObituary
+
+called when a player dies
+============
+*/
+void(entity targ, entity attacker) ClientObituary =
+{
+	local	float rnum;
+	local	string deathstring, deathstring2;
+	rnum = random();
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right after that, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (targ.deathtype == "paint")
+		{
+		attacker.frags = attacker.frags + 10;
+		bprint(targ.netname);
+		bprint(" was painted by ");
+		bprint(attacker.netname);
+		bprint("!\n");
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yummy. We interrupt the normally scheduled subroutine to check for a paint victim. We award Van Gogh ten shiny new frags. We print an eloquent message. We exit the routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: if you did the bot-on-scoreboard tut, you will have to add one of those msgUpdateFragsToAll() calls here. If you don't, the bot scores will be wrong on the ranking. Also, if you have the variable .colormap active, the paint might not be very visible on the bots. You can disable .colormap and still give him shirts and pants colors.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Umm. I guess we're done. I realize this lesson is a bit rough around the edges. There are many things you could improve. One, make the paintgun an additional weapon. Two, create new skins for the player and a new model for the paintgun. I am no modeller. I know many of you are more artistic than I am, so go to it.<BR>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Skins are very easily changed<BR>
+2. You can replace models that Quake already precaches<BR> 
+3. You can simply copy and paste old routines to make new ones<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

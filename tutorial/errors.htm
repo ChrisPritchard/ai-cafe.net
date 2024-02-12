@@ -1,0 +1,98 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Common Errors</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you are imperfect like me, you have likely run into QuakeC errors. In fact, I encounter errors about every other time I compile. Honestly. Sometimes I still forget to include my semicolons. So don't feel bad.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this this, we will take some time off from the programming and examine some of the most common errors a bot coder would face. All the tutorials in the world wouldn't help you if ProQcc tells you "unknown value blah blah blah."<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remember, these are just my examples; what you experienced might be a bit different. Let's rock.<P>
+
+<H3>unknown value enf_duck1();</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You have called a subroutine that you have not written or declared. You have to put the subroutine before this line, or at least declare it like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() enf_duck1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now you are ready to call that routine.<P>
+
+<H3>unknown value bot</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You are referring to a specific entity which you did not define. In most cases you should probably be referring to "self" or "other."<P>
+
+<H3>stack overflow</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a biggie which will shut your program down. It is caused by a infinite loop, which means the same routines are being called endlessly with no result. It usually happens around bot_run(). This means that the bot is likely going back and forth from bot_walk() to bot_run(). You have to make sure he is thinking one subroutine at a time.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This error also occurs because -- gasp! -- there are two bugs in the Tutor Bot. One, in bot_set_currentammo(), you will notice that the section for the grenade launcher is missing. You must make one. Two, in bot_pain(), you will see that the bot gets mad at any attacker ... including himself. You must change this.<P>
+
+<H3>null function</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here is another error that will break your program. Simply put, you told your bot to think nothing. That is, he does not have a subroutine to think -- or that subroutine is empty -- but his nextthink is active. Examine the routines that QuakeC prints to the console.<P>
+
+<H3>assigned value to world entity</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You tried to change an entity's properties, but nothing was there. For instance, you wanted to add one to a bot's frags, but the bot no longer exists. You cannot give the world entity any new values.<P>
+
+<H3>expected ; found self</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You forgot the semicolon that belongs after most lines in QuakeC, so the program thought that the next line after it was a part of it. This of course is a simple "syntax error" that is easy to do. Duh. Just find that line and put the semicolon at the end.<P>
+
+<H3>your bot just runs in place</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Heehee. The bot is looping through his animation ( bot_walk1() ... bot_walk6() ) correctly, but he not executing any movement commands. These are usually walkmove() or movetogoal(). You are likely leaving the AI subroutine before he can get to one of these. Or else you told him to ignore them for some reason. Look again at your AI routine.<P>
+
+<H3>bot runs in place against a wall</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You are probably using walkmove() for navigation but not checking to see where it goes. Remember that walkmove() just pushes the bot forward; it does not think or look for obstacles. You would have to write it like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (walkmove(self.angles_y, 20) == FALSE)
+		self.angles_y = self.angles_y - 45;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here, if he cannot walk forward, he will turn himself by 45 degrees.<P>
+
+<H3>bot jumps down simple ramps or steps</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The subroutine that you are using to check for gaps in the floor does not work well. It does not see any floor on the level of the bot's feet and assumes that it is a ledge. This takes trial and error to fix. Try to look at multiple points in front of him.<P>
+
+<H3>bot jumps into lava or slime</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ouch. Just like above, he is not checking in the exact right position. He must look at a point farther in front of him and lower than him to see if its pointcontents() are dangerous. Again, it's not easy to get right.<P>
+
+<H3>bots wanders around same area as if he's looking for something</H3>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This might just be because navigation is imperfect. But more likely it is from the use of movetogoal(), which can be a weird function. It tends to zigzig to its intended goal, and sometimes will even move the bot in the opposite direction just trying to get around an obstacle. On the other hand, the bot's goalentity might be set to string_null (meaning it's invisible), which means he cannot touch it yet.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. We learned a heap of stuff<BR>
+2. You can't have a number 1 without a number 2<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+</HTML>

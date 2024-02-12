@@ -1,0 +1,101 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Gibbable Corpses</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Artificial intelligence is over-rated. I can live without smart deathmatch opponents. But life just isn't any fun unless you have gibbable corpses.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you agree, then open up the file deemed tutor.qc. Scroll down to the subroutine th_respawn(), which is after the animation sequence bot_light1(). Change the routine to look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() th_respawn =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	self.think = respawn_bot;
+	self.nextthink = time + 2;
+	create_gibbable_corpse();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To create a gibbable corpse, we don't have to screw with the bot at all. All we need to do is make a copy of his body when he gets smoked.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before the previous routine, paste this here one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() create_gibbable_corpse =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity corpse;
+
+	corpse = spawn();
+	corpse.origin = self.origin;
+	corpse.flags = FL_ITEM;
+	corpse.solid = SOLID_BBOX;
+	corpse.touch = gib_corpse;
+	corpse.takedamage = DAMAGE_AIM;
+	corpse.th_die = gib_corpse;
+	setsize (corpse, VEC_HULL_MIN, VEC_HULL_MAX);
+	setmodel (corpse, self.model);
+	corpse.frame = self.frame;
+	corpse.angles = self.angles;
+	corpse.skin = self.skin;
+	corpse.colormap = self.colormap;
+	corpse.think = SUB_Remove;
+	corpse.nextthink = time + 6;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here we create an entity that looks and smells just like the bot. This entity will just lay on the ground until someone touches it or shoots it. Then its die function will happen. Where is its die function, you ask? Uh, right here. Paste this before the previous:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() gib_corpse =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float vel;
+
+	self.nextthink = time;
+	setmodel (self, string_null);
+	vel = random() * 200;
+	ThrowGib ("progs/gib1.mdl", vel);
+	vel = random() * 200;
+	ThrowGib ("progs/gib2.mdl", vel);
+	vel = random() * 200;
+	ThrowGib ("progs/gib3.mdl", vel);
+	remove(self);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Splat! The body blows up in gibs when this happens. If no one shoots it, the corpse will just remove itself.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: sometimes this doesn't happen immediately, don't know why. I'm far from perfect, y'know. Maybe you can fix it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Another note: no, this doesn't happen when the player dies. I'm far from perfect, y'know. Maybe you can write it. Yet one more note: no, a bot will not shoot at the gibbable body. If you want, try giving it a classname of "bot" and a little health. This might do it. Maybe. I don't know. Well, it will be a nice surprise, huh?<P>	
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>
+

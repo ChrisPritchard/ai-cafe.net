@@ -1,0 +1,208 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Strafing to Items During Battle</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<I>Note: this lesson is only compatible with your bot if he picks up items from the item's touch function in items.qc. I did write a tutorial covering this. The native Tutor Bot bot_grab_item() routine will <B>not</B> work properly.</I><P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Man, that title is a mouthful. I guess there's no shorter way of explaining today's lesson, though. Here's an even longer way of stating it: your bot will learn the splendid skill of moving towards and picking up important items during battle while he is facing you and shooting.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yeah, I know, I'm excited too. It's one of the cooler things I've done with my bot. In fact, when I saw my little guy strafe into a rocket launcher and then blast me with it, I thought I was fighting a Reaper. Hehe, wait until you see it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This tutorial utilizes my hybrid velocity code of course, but therein lies the challenge: if we "push" him in the direction which he is facing, then how are we now to make him face one direction and "push" him in another?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, I'm glad you asked, because I have an answer. Ironically enough, we're going to use id software for our solution. They created a variable called self.ideal_yaw, which is supposedly the ideal direction a monster should face. They use it in a dumb way, but we'll put it to smart use.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, the bot is always facing the direction of his self.angles_y. The bot model itself is facing that direction. But in order for use to push him in a separate direction, we need another variable to store this direction. And that is self.ideal_yaw. Oh, how fitting.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First things first. For this lesson, we will need to define only one new variable. Open defs.qc, and at the very bottom, add this:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.entity second_goal;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;M-kay. You should know that during a fight, the bot's self.goalentity is always his enemy. And such, we cannot use that variable. Therefore, this new entity will store the item that the bot wants to strafe into during the battle. Next, open up tutor.qc and move down to the subroutine respawn_bot(), where you should see a section looking something like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// finishing his characteristics
+	self.items = IT_SHOTGUN;
+	self.currentammo = self.ammo_shells = self.ammo_shells + 25;
+	self.weapon = IT_SHOTGUN;
+	self.health = 100;
+	self.max_health = 100;
+	self.classname = "bot";
+	self.air_finished = time + 12;
+	self.enemy = world;
+	self.goalentity = world;
+	self.search_time = 0;
+	self.pausetime = 0;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that beautiful code, add this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.second_goal = world;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This merely resets his second goal entity when he dies (just like his self.goalentity or self.enemy). No big deal there.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we can get into the lesson proper. Since our bot will be doing some strafing, I guess that bot_strafe() would be the applicable routine in which to work. So, basically, you want to make that routine begin like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() bot_strafe =
+// ----------------------
+{
+
+	scan_for_fight_items();
+
+	if (self.second_goal != world)
+		{
+		strafe_to_item();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Good. This is the brain of his new skill. Allow me to state this in English: "I will check around for good items that I can pick up. If I see one, let me mark it as my second goal. So then, if I have a second goal, I will move toward it and leave the subroutine."<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That should be easy to follow. You are basically giving the bot more memory. If his second goal is the world (in other words, nothing), he will go on with bot_strafe() and fight as normal.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have some harder work to do now: the actual subroutines. We need to write scan_for_fight_items(). Well, I need to write it; you just need to paste it, you lucky bastid. Stick the following before the last code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() scan_for_fight_items =
+// ------------------------------------------------
+{
+local entity item;
+local float dist;
+
+	if (self.second_goal.model == string_null)
+		self.second_goal = world;
+	if (!visible(self.second_goal))
+		self.second_goal = world;
+	if (self.second_goal != world)
+		return;
+
+// checks a radius around him for items
+	dist = 1000;
+	item = findradius(self.origin, dist);
+
+	while(item)
+		{
+		if ( (item.classname == "weapon_supershotgun" ||
+			item.classname == "weapon_nailgun" ||
+			item.classname == "weapon_supernailgun" ||
+			item.classname == "weapon_grenadelauncher" ||
+			item.classname == "weapon_rocketlauncher" ||
+			item.classname == "weapon_lightning" ||
+			item.classname == "item_health")
+			&& visible(item) && item.model != string_null &&
+			vlen (item.origin - self.origin) < dist)
+				{
+				dist = vlen (item.origin - self.origin);
+				self.search_time = time + 10;
+				self.second_goal = item;
+				}
+		item = item.chain;
+		}
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a simple find-the-item-in-a-certain-radius routine. You've seen them, even written them before. If his second goal is invisible or has been picked up, he resets it. If he has a second goal already, he leaves this subroutine. If not, he looks 1000 units around him for one of the items listed there (weapons or health). You can expand this; I just figured these are the key items to get mid-battle. He then remembers the item if he sees one.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now that he's got a second goal, we have to move him toward it. Paste the following three routines before bot_strafe():<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -----------------------------------------
+void() jump_random =
+// -----------------------------------------
+{
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	if (random() > 0.5)
+		self.velocity_x = (random() * 100) + 100;
+		else self.velocity_y = (random() * 100) + 100;
+
+	self.velocity_z = self.velocity_z + 200;
+	sound (self, CHAN_BODY, "player/plyrjmp8.wav", 1, ATTN_NORM);
+
+};
+
+// ----------------------
+void() walk_forward =
+// ----------------------
+{
+	walkmove(self.angles_y, 20);
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * self.speed;
+};
+
+
+// -----------------------------------
+void() strafe_to_item =
+// -----------------------------------
+{
+local vector dir;
+
+	self.ideal_yaw = vectoyaw(self.second_goal.origin - self.origin);
+	if (walkmove(self.ideal_yaw, 20) == TRUE)
+		{
+		self.flags = self.flags - (self.flags & FL_ONGROUND);
+		dir = normalize(self.second_goal.origin - self.origin);
+		self.velocity = dir * self.speed;
+		return;
+		}
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+	if (random() > 0.8)
+		walk_forward();
+		else jump_random();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay now, don't be a'scared. Along with our new strafe_to_item() method, I threw in two of my navigational support routines. They are called walk_forward() and jump_random(). They are self-explanatory. I hope.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, our new method is not very long, so therefore it is not very complex. We make his self.ideal_yaw point toward his second goal. If he can walk in that direction, we push him with my velocity code, and leave the routine (remember, his self.angles_y is still facing the enemy). We then check to see if he's in mid-air, and if so, we also leave.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If we're still in the routine at this point, then he ran into an obstacle. We randomly tell him to either move forward a bit or jump out of the way. Yes, this is quite imprecise, but it's one of my quick-fix methods; you can tweak it until your stubby little fingers bleed.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And then we ... um, we ... er, we ... I guess we don't do anything. We're done. I've playtested this method extensively, and let me tell you, it works. Find a fairly wide open room with weapons or health in it and pick a fight with your bot. He will shoot at you while sliding toward the item.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All we did really was give him an extra entity and an extra direction to remember. Nothing too hard there. The cool thing is, if he doesn't see anything, he'll do the normal fighting things you told him to do. Just make sure to get between him and that rocket launcher.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. self.ideal_yaw is a direction, but the bot or monster is not necessarily facing it<BR>
+2. the bot can "remember" self.ideal_yaw while looking toward self.angles_y<BR>
+3. we should keep self.goalentity reserved, since movetogoal() only reacts to it<BR>
+4. self.enemy and self.goalentity are usually the same thing<P> 
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

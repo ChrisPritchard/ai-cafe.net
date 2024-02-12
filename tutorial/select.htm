@@ -1,0 +1,142 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Improved Weapon Selection</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ok then! I'm back with another tutorial, and it's one you really need to do!<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A while ago, Coffee released a tutorial on giving the bots weapon preferences. This tutorial takes this one step further, and makes the bots choose their weapons intelligently, based on several stimuli.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You're probably confused, so I'll give you a few examples of what I'm talking about. Would you use a grenade launcher at long distances? Would you use a rocket launcher against a shambler if you also had a lightning gun? Would you use a nailgun against a zombie? The tutor bot would probably do all these things, where as a human wouldn't. Let's make these bots think a little more.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ok, what we're gonna do is this. Firstly, we'll make the bot check which weapon to use each frame, so that he can change weapon if one of the stimuli changes, e.g. if he is using a lightning gun and the opponent goes out of range. Secondly, we'll totally replace bot_bestweapon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To begin with, scroll down to the end of bot_strafe. The bot runs this routine each frame during combat, so it is an ideal place to tell the bot to select a new weapon. At the end of the routine, just before the }; add the following two lines:<BR>
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+self.weapon = bot_bestweapon;
+bot_set_currentammo();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Beautiful. This tells the bot to select his best weapon then select the ammo for it. Simple. Now, scroll down to bot_bestweapon, where you'll see something like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() bot_bestweapon =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	local	float	it;
+	
+	it = self.items;
+
+	if (self.ammo_rockets >= 1 && (it & IT_ROCKET_LAUNCHER) )
+		return IT_ROCKET_LAUNCHER;
+	else if (self.ammo_cells >= 2 && (it & IT_LIGHTNING) )
+		return IT_LIGHTNING;
+	else if (self.ammo_nails >= 2 && (it & IT_SUPER_NAILGUN) )
+		return IT_SUPER_NAILGUN;
+	else if (self.ammo_rockets >= 1 && (it & IT_GRENADE_LAUNCHER) )
+		return IT_GRENADE_LAUNCHER;
+	else if (self.ammo_shells >= 2 && (it & IT_SUPER_SHOTGUN) )
+		return IT_SUPER_SHOTGUN;
+	else if (self.ammo_nails >= 1 && (it & IT_NAILGUN) )
+		return IT_NAILGUN;
+
+		return IT_SHOTGUN;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You should all understand that. Now replace it all with this:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float () bot_bestweapon =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	local   float   dist, weap;
+
+	dist = vlen ((self.enemy.origin + '0 0 16')- (self.origin + '0 0 16'));
+
+	if ((self.items & IT_GRENADE_LAUNCHER) && (self.ammo_rockets > 0) && (teamplay == 1) && (dist < 600))
+		weap = IT_GRENADE_LAUNCHER;
+
+	else if ((self.items & IT_LIGHTNING) && (self.ammo_cells > 0) && (pointcontents(self.origin) != CONTENT_WATER) && (dist < 600))
+		weap = IT_LIGHTNING;
+
+	else if ((self.items & IT_ROCKET_LAUNCHER) && (self.ammo_rockets > 0) && (dist < 1000) && (dist > 100))
+		weap = IT_ROCKET_LAUNCHER;
+
+	else if ((self.items & IT_SUPER_NAILGUN) && (self.ammo_nails > 0) && (dist < 1000))
+		weap = IT_SUPER_NAILGUN;
+
+	else if ((self.items & IT_GRENADE_LAUNCHER) && (self.ammo_rockets > 0) && (dist > 100) && (dist < 600))
+		weap = IT_GRENADE_LAUNCHER;
+
+	else if ((self.items & IT_SUPER_SHOTGUN) && (self.ammo_shells > 1) && (dist < 700))
+		weap = IT_SUPER_SHOTGUN;
+
+	else if ((self.items & IT_NAILGUN) && (self.ammo_nails > 0) && (dist < 1000))
+		weap = IT_NAILGUN;
+
+	else if (!weap)
+		weap = IT_SHOTGUN;
+
+	if (self.enemy.classname == "monster_zombie")
+		{
+		if ((self.items & IT_GRENADE_LAUNCHER) && (self.ammo_rockets > 0) && (self.enemy.origin_z - self.origin_z < 64))
+			weap = IT_GRENADE_LAUNCHER;
+	
+		else if ((self.items & IT_ROCKET_LAUNCHER) && (self.ammo_rockets > 0))
+			weap = IT_ROCKET_LAUNCHER;
+		}
+
+	else if (self.enemy.classname == "monster_shambler")
+		{
+		if ((self.items & IT_LIGHTNING) && (self.ammo_cells > 0))
+		      weap = IT_LIGHTNING;
+
+		else if ((self.items & IT_SUPER_NAILGUN) && (self.ammo_nails > 1))
+      		weap = IT_SUPER_NAILGUN;
+
+		else if ((self.items & IT_NAILGUN) && (self.ammo_nails > 0))
+		weap = IT_NAILGUN;
+		}
+
+	return weap;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Wow! Now that is a long piece of code! It's just basically a list of stimuli, and code for selecting which weapon best fits the current situation, e.g. if the enemy is a zombie use rockets or grenades. The code is pretty simple to understand, so have a look through, and see if you can see why I chose those criteria.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We're done. That wasn't so hard, was it?<BR>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Criteria should be checked every frame<BR>
+2. Bots who fight zombies with nailguns are pretty stupid<BR>
+3. My tutorials aren't all math-based<P>
+
+<CENTER><P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="MS Sans Serif"><FONT SIZE=+0>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: SkinSki<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:skinski@storm-1.freeserve.co.uk">skinski@storm-1.freeserve.co.uk<BR></A>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 30578982</FONT></FONT><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center></P></CENTER>
+</BODY>
+</HTML>

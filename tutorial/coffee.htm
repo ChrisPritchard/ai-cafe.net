@@ -1,0 +1,116 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Better Navigation</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I bet some people out there don't take the Tutor Bot seriously. These guys probably think that since he doesn't learn the level, he's no good.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;They're wrong.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, the FrogBot, Omicron, and Reaper run around the map pretty good. But the Tutor Bot features a secret little gem of navigation code that <B>no</B> other bot has. It's called coffee_move(), and it's hard core.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This little subroutine is called a "robust tracing algorthym" in fancy AI terms. This simply means that he traces along the walls.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When I was studying navigation, I spent many hours watching various bots in observer mode. I noticed that their biggest problem was not reaching items, but just getting from room to room. Go ahead, observe a Omicron or Reaper quietly. You'll see that for much of the time, he simply can't find a way out of the room.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I concluded that since he couldn't see an open door, he might as well try to feel for one. Thus coffee_move() was born. And for this routine alone, the Tutor Bot should not be overlooked.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sometime, you should set your name to "observer" and just watch the Tutor Bot. When he acn't find any items, he'll start walking along the walls. Basically, he's just strafing and then making a 90-degree turn when he hits another wall. He may not look graceful doing this, but again, no other bot does this. I've seen him go from one end of a level to another with this method.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We can improve coffee_move() a bit in two ways. I noticed that he seems to change his direction a bit too often, therefore backtracking over the same area His direction is stored in self.button1, as we see here in coffee_move():<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// every so often, he'll change his wall-hugging direction
+
+	if (random() <= 0.02)
+		if (self.button1 == 90)
+			self.button1 = -90;
+			else self.button1 = 90;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you think he changes directions too much, we can change that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (random() <= 0.02)
+		if (random() < 0.5)
+			if (self.button1 == 90)
+				self.button1 = -90;
+				else self.button1 = 90;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we have a double random number (note: 0.01 never seems to happen). This way, there will be less chance that the random number will come up, and he'll head in the same direction longer.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, the danger in this is that he will get into a tight space with many walls and keep making circles. Oh well, nobody's perfect. If you can improve on coffee_move(), feel free to do so.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, we can make this routine a whole lot faster with our velocity code. As you can see here, coffee_move() now only uses walkmove() to move the bot:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (walkmove (self.angles_y, 20) == FALSE)
+		if (walkmove (self.angles_y + self.button1, 20) == FALSE)
+			self.angles_y = self.angles_y + (self.button1 / 2);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We want to completely replace those three lines with all of these:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (walkmove (self.angles_y, 20) == TRUE)
+		{
+		makevectors(self.angles);
+		self.flags = self.flags - (self.flags & FL_ONGROUND);
+		self.velocity = v_forward * 300;
+		return;
+		}
+
+	if (walkmove (self.angles_y + self.button1, 20) == TRUE)
+		{
+		if (self.button1 == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * 300;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * -300;
+			}
+		return;
+		}
+
+	self.angles_y = self.angles_y + (self.button1 / 2);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, settle down. Yes, this is a bit different, but not to worry. It's different because before we had all those FALSE instances, but since we're adding velocity, we had to use TRUE structures. I guess it's time for an English explanation:<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If I can walk forward, I'll give myself a push, then leave the subroutine. If I can strafe to the side, and if I am moving right, I'll give myself a right push, else I'll give myself a left push. If I cannot strafe to the side, I'll rotate to corner the wall."<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eh, okay, maybe that's not crystal clear. I guess coffee_move() works in such a way that either you grasp it or you don't. As long as you know how to cut-and-paste, though, you're okay.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's today's lesson. I hope you like my little navigation routine. I hope you see ways to improve it. I hope you tell your friends, "Wow, the Tutor Bot traces the walls and the Reaper doesn't!"<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Bots have the most trouble getting out of rooms<BR>
+2. id's walkmove() returns true if he can walk, false if he can't<BR>
+3. Navigation is likely the hardest aspect of AI<BR>
+4. The Tutor Bot is no one to be trifled with<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

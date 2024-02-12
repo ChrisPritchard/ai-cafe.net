@@ -1,0 +1,96 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Bot Fundamentals</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now that I've released the Tutor Bot, guys ask me, "What does your bot do?" The question makes me scratch my head. It makes me wonder if they missed the whole point.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simply put, the Tutor Bot is not a player's bot, he's a developer's bot. He's made for people who are looking for a simple bot code base, for people who want to understand how a bot works.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And so I've decided to write this lesson to explain the fundamentals of a deathmatch bot. It's pretty simple, as you'll see. So let's get at it.<P>
+&nbsp;<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>1. The Entity</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First off, a bot is nothing more than a QuakeC entity. In fact, he's basically a monster that acts like a player.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The Tutor Bot is spawned in create_bot(). Of course he has a size and a shape. One special thing about him is that he's a SOLID_SLIDEBOX, just like monsters. This means he can use navigation code like movetogoal().<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The other special aspect about him is his animation. It's basically the sequences that are found in player.qc. Naturally, he has animation for standing, walking, and running. But he also possesses sequences for shotgun, rocket, nail, and lightning attacks.<P>
+&nbsp;<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>2. The Lifespan</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you're reading this tutorial (um, I guess you are), you want to know how the bot works, pure and simple. I'll get right to it and list some of the major subroutines from birth to death:<P>
+
+create_bot() ................... spawns the bot<BR>
+bot_stand1() ................... animation which loops through bot_stand5()<BR>
+bot_stand() .................... AI standing thoughts<BR>
+bot_walk1() .................... animation that loops through bot_walk6()<BR>
+bot_look_for_players() ... searches for enemies<BR>
+bot_run1() ..................... animation that loops through bot_run6()<BR>
+bot_run() ...................... AI fighting thoughts<BR>
+bot_strafe() ................... AI evasion and attacking thoughts<BR>
+bot_pain() ..................... happens when he gets hit<BR>
+bot_attack() ................... his central attacking routine<BR>
+bot_rock1() .................... one of his attack animation sequences<BR>
+bot_die() ...................... happens when he's out of health<BR>
+bot_die1() ..................... one of his death animation sequences<BR>
+respawn_bot() .................. puts him back into the game<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a sample of any given lifespan of the bot. It does not include every subroutine that is called, and may vary in his next lifespan.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, the animation happens first, and kind of serves as the frame for the bot's life. The AI routines are usually called from the animation frames. Thus, they usually have counterparts to each other, like bot_stand1() and bot_stand().<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A little tip which you may have noticed: if you see a subroutine ending with the number one, like bot_light1(), it most likely is an animation sequence.<P>
+&nbsp;<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>3. The Behavior</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As we now know, the bot's animation and AI is tied together. The animation happens first, but the AI can call different animation scenes.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For instance, bot_walk1() is the start of an animation sequence. The AI routine bot_walk() is called during each frame.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the bot_walk() routine, the bot looks for enemies. If he finds one, he calls bot_run1(), an animation sequence.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Maybe that was a little wordy. Basically what I mean to say is that the bot is a series of animation-AI sequence loops. Period.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;His two important variables are self.goalentity and self.enemy. His goal entity can be an item, a bot, a player, or the world. The id Software function movetogoal() will move toward whatever his goal entity is.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;His enemy can be a bot, a player, or the world. The enemy also becomes his goalentity, and again we can use movetogoal() to follow the enemy.<P>
+&nbsp;<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>4. The FAQ</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. Why does the Tutor Bot act so simply?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. Because I want him to be simple. I focused more on keeping his program clean and easy than his behavior. Yes, the FrogBot would kick his ass, but the Frog's code is probably 10 times as long and 100 times as complex.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. If the bot moves and acts like a player, why can't they share the same subroutines?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. The bot is basically a monster with the player model who has more than one weapon. The player subroutines use different physics and methods that wouldn't match with the bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. Why didn't you use Norse_movetogoal() and other better code like that?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. The Norse_movetogoal() program is at least 50 pages long, and all it does is move the bot from one end of the room to the other. To repeat: 50 pages long. The whole Tutor Bot isn't that long. I believe in small solutions to big problems.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. The Omicron does this and that and the other thing and he calculates the square root of pi over nothing. Why doesn't the Tutor Bot do these things?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. You see, AI is a tricky business. And I mean that literally: it is just like magic. If you can fool the player into believing he is smart, then he's smart. The bot doesn't need to do trigonometry. You only see him when he's fighting anyway, which is a small fraction of the time.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. If I don't know much, how can I learn about a bot?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. Number one, read. Number two, experiment. You'll never learn anything useful if you don't get into that code and screw with things. I recommend messing around with bot_walk(), bot_search_for_items() and especially bot_strafe().<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. Why does the bot actually pick up items?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. Again, I wanted it easy to plug the Tutor Bot into any project, so I wanted as few steps as possible. If you want him to pick up things, you'll have to make changes in items.qc.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. Shouldn't I just use the code for the FrogBot, or even the Reaper?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. First, the source code for those bots is pretty complex. I didn't learn much from them. Second, the Tutor Bot would be easier to modify, customize, even add to other mods.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Q. Why didn't you make the Tutor Bot smarter?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A. Players don't want more intelligent AI, they want more enjoyable AI. I'm a fan of AI, but wanting smart AI is just a myth. I want a bot who may tease me, gesture at me, or trick me with a hologram. Can you give that to me?<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. The bot's animation and AI work together<BR>
+2. A bot is basically a monster who looks like a player<BR> 
+3. Standing, walking, and running are his main states<BR>
+4. Self.goalentity and self.enemy are his main variables<BR>
+5. Players want fun AI, not smart AI<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

@@ -1,0 +1,72 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Improved Grenade Aiming</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Some tutorials can be long, and others shortish. this one is so short that you won't believe it. It's just one line of code!<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The Tutor bot has awful grenade aiming. This is a simple problem and simple to fix. Basically, no matter how high or low it's enemy is in relation to it's self, it will always fire the grenade at the same vertical height. That is, it doesn't aim up and down with grenades.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we can't let our bots use the same aiming code as Ogres, can we! Lets open up tutor.qc, and scroll down to bot_fire_grenade, which begins like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// """"""""""""""""""""""""""""
+void() bot_fire_grenade =
+// ----------------------------
+{
+	local	entity missile;
+	
+	self.currentammo = self.ammo_rockets = self.ammo_rockets - 1;
+	self.effects = self.effects | EF_MUZZLEFLASH;
+	sound (self, CHAN_WEAPON, "weapons/grenade.wav", 1, ATTN_NORM);
+
+	missile = spawn ();
+	missile.owner = self;
+	missile.movetype = MOVETYPE_BOUNCE;
+	missile.solid = SOLID_BBOX;
+		
+// set missile speed	
+	makevectors (self.v_angle);
+
+	missile.velocity = bot_aim_at_enemy();
+	missile.velocity = missile.velocity * 500;
+	missile.velocity_z = 300;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That last line is the one we're looking for, the evil line which tells the bot to ignore the height difference. Change it to:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+missile.velocity_z = missile.velocity_z + 200;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyone with half a brain can see what i've done! Instead of reseting the Z velocity, I've just added to it, so it shoots to the right height, like a player would. Also, I changed the 300 to a 200, as that's what the player's grenade Z velocity is.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That really is it! Compile it, and play on a level like DM1, where the bot can wreak hovoc with grenades!<BR>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Coffee likes using daft ogre code!<BR>
+2. Only joking. We didn't learn anything really....<BR>
+
+<CENTER><P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="MS Sans Serif"><FONT SIZE=+0>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: SkinSki<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:skinski@storm-1.freeserve.co.uk">skinski@storm-1.freeserve.co.uk<BR></A>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 30578982</FONT></FONT><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center></P></CENTER>
+</BODY>
+</HTML>

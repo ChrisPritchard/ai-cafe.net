@@ -1,0 +1,289 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR align=center SIZE=3 width="100%">
+<FONT face=Impact size=+3>
+<CENTER>Better Jumping For Sure!</CENTER></FONT>
+<HR align=center SIZE=3 width="100%">
+
+<p>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A week or so ago I saw a tutorial on Coffee's site called "Better Jumping". I read it, I read it again and then looked puzzled. Unfortunately that tutorial is incorrect! I'll go through it, not to embarass the author - we're all grateful someone submits tutorials - but to clarify a few points so no-one gets things wrong in the future. Here's that original tutorial, with my comments added around it:
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() check_for_ledge =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local vector spot;
+
+        if (!(self.flags & FL_ONGROUND)) // The bot can ONLY jump if he is on the ground
+                return; // If he's not then don't jump
+
+        makevectors (self.angles); // Jump the way he's a facin
+</FONT>
+</PRE>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So far no problems but...<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+        spot = self.origin + (v_forward * 5); // Coffee put that at 60.. I think he was drunk 
+</FONT>
+</PRE>
+
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No way was he drunk! This line in the tutorial tells the engine to check <b>5 quake units</b> in front of the bot's origin. The origin of a quake monster (like our bot) is at waist height, in the middle of his body. Can we say "doesn't even get past his beer gut!"?? A quake unit, in case you were wondering, is roughly an inch and a bit *grin*. Why is that a problem? Do we remember decelleration? The bot will not have time to stop, or jump, before it's over the edge - not what we want huh...
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we have ...<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+        spot = spot - '0 0 45'; // WOW he's checking WAY to deep for a ledge! Let's fix that! (Higher value = Less deep)
+</FONT>
+</PRE>
+
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ahem ... sorry, wrong. Those three numbers are a vector, and they are being subtracted from the spot being tested. The third number is the "z" of the vector (that means it's the up and down part) and to go deeper you have to subtract <b>MORE</b> from it, not less. Now we've cleared that up, on with the new tutorial.
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All the work for this tutorial takes place in <b>Tutor.qc</b> so open it up now and get ready for a long haul. First scroll down to jump_forward() and replace it with this. It's not much different, but it works the way I want it to.
+
+<PRE><FONT color=#dfbfff face=System>
+// -----------------------------------------
+void() jump_forward =
+// -----------------------------------------
+{
+// propels him into the air
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+//RiEvEr BETTER JUMPING FOR SURE
+		
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	makevectors(self.angles);
+	self.velocity = self.velocity + (v_forward * 250);
+	self.velocity_z = self.velocity_z + 250;
+
+//R BJFS
+};
+</FONT>
+</pre>
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All we've done is detach the bot from the ground and push it forwards and up at the player jump rate. That was the easy bit. Now scroll down to check_for_ledge() and get replace the whole ting with the two routines below. Just do it now and then find out what it does after you've finished pasting it.
+
+<PRE><FONT color=#dfbfff face=System>
+//RiEvEr
+// BETTER JUMPING FOR SURE!
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() check_for_ledge =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Return values:
+// 0 = NOJUMP
+// 1 = JUMP
+{
+	local   float   contents;
+	local   vector  start, end;
+
+	makevectors (self.angles);
+
+// movetogoal() will never move over a ledge, so we have to 
+// check for a break in front of him and force him to jump
+
+	if (!(self.flags & FL_ONGROUND))
+		return(0);
+
+	// Where the bot's feet are now
+	start = self.origin - '0 0 24';
+	end = start + v_forward *96;
+
+	// Check 96 Quake units in front of the bot at foot height
+	traceline (start, end, TRUE, self);
+
+	// If there's a wall or obstacle, return NOJUMP
+	if (trace_fraction != 1.0)
+		return (0); // NOJUMP
+
+	start = end;
+	end = start - '0 0 256'; //256 units down 
+
+	// Now look down and see how far we drop and what's there (MAX 256 units)
+	traceline (start, end, TRUE, self);
+
+	contents = pointcontents (trace_endpos);
+	// If it's LAVA, SLIME or a long way down and no ledge to jump to, return DANGER
+	if ( (trace_fraction == 1.0) || (contents == CONTENT_LAVA) || (contents == CONTENT_SLIME) )
+		return (0); // NOJUMP
+	else
+	{
+		bot_jump1();
+		//player jumping sound
+		sound (self, CHAN_BODY, "player/plyrjmp8.wav", 1, ATTN_NORM);
+		return(1);// JUMP
+	}
+	return (0); // NOJUMP
+};
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() bot_move_safely =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Return codes
+// 0 = DANGER
+// 1 = SAFE
+// 2 = JUMPING
+{
+	local   float   contents;
+	local   vector  start, end;
+
+	if (!(self.flags & FL_ONGROUND))
+		return (1); // SAFE
+	makevectors (self.angles);
+
+	// Where the bot's waist is now
+	start = self.origin;
+	end = start + v_forward *48;
+
+	// Check 48 Quake units in front of the bot at waist height
+	traceline (start, end, TRUE, self);
+
+	// If there's a wall or obstacle use that as our test point
+	if (trace_fraction != 1.0)
+		start = trace_endpos;
+	else
+		start = end;
+	end = start - '0 0 280'; //256 units down + 24 units for bot waist height
+
+	// Now look down and see how far we drop and what's there (MAX 256 units)
+	traceline (start, end, TRUE, self);
+
+	// If it's a short drop, just drop
+	if( (trace_fraction * 280) < 48)
+		return (1); // SAFE
+
+	contents = pointcontents (trace_endpos);
+	// If it's LAVA, SLIME or a long way down and no ledge to jump to, return DANGER
+	if ( (trace_fraction == 1.0) || (contents == CONTENT_LAVA) || (contents == CONTENT_SLIME) )
+	{
+		if ( check_for_ledge() )
+			return(2); // JUMPING
+		else 
+			return (0); // DANGER
+	}
+	if ( check_for_ledge() )
+		return(2); // JUMPING
+	// else return SAFE 
+	return (1);
+};
+//R BJFS
+</FONT>
+</pre>
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes - we've discovered that QuakeC routines can return values like real C routines. Excellent! The second of those two functions checks for a safe landing spot, this will make it useful even if we call it from somewhere else in the code later. Normally this is only called when the bot is running with MoveToGoal action, but these additions mean that  -  if you think about it - you can make the bot jump during other parts of its movement routines too.
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The function returns 3 values: DANGER, SAFE and JUMPING. You see how easy it is to tell another part of the program what you've done? The <b>trace</b> command is very powerful. It is the basis of all collision based movement routines and aiming routines. We are using it here for 
+<ol>
+<li>Checking if there is a wall in front of the bot
+<li>Checking if there is a long drop in front of the bot
+<li>Looking for lava or slime below the bot
+<li>Looking for a safe landing zone if the bot jumps over the edge
+</ol>
+<p>and we've barely scratched the surface of what it can do. Check out some of the documentation on Inside3D to find out more about it. Now, scroll down to bot_walk and make the changes marked below:
+
+<PRE><FONT color=#dfbfff face=System>
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_walk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	local float status;	//RiEvEr BETTER JUMPING FOR SURE
+
+// this is his main AI routine, where he will look for items and enemies
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+	if (should_rocket_jump())
+		return;
+
+//RiEvEr BETTER JUMPING FOR SURE
+	status = bot_move_safely();
+	if( status == 0) // LAVA, SLIME, LONG DROP
+	{
+		// Can't carry on - DANGER
+		// Need to change direction (90 degrees should do it)
+		self.angles_y = self.angles_y + self.button1;
+		makevectors(self.angles);
+		self.flags = self.flags - (self.flags & FL_ONGROUND);
+		self.velocity = v_forward * 150; // slightly slower than normal
+		return;
+	}
+	else if (status == 2) // JUMPING
+	{
+		return;
+	}
+//R BJFS
+
+	bot_look_for_bots();
+	bot_look_for_players();
+	bot_search_for_items();
+	bot_grab_items();
+
+//RiEvEr - removed the check_for_ledges() line
+	check_for_water();
+
+// of course movetogoal() is id's C function, it moves randomly
+// toward what his self.goalentity is; don't let it worry you,
+// this function takes a long time to get where its going
+// the coffee_move is his cool running function
+
+	if (self.goalentity != world)
+		movetogoal(20);
+		else coffee_move();
+};
+</FONT>
+</pre>
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We've removed the ledge checking routine and call our own safety checking routine first. If it's not safe, we force the bot to go another direction, currently just turn 90 degrees. It would not be hard to improve on this direction change code.
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Finally we change the jumping animation code. I like the rockatt2 frame for jumps, you may have other preferences so youi can change the frames in the first part marked with a dollar sign, but leave the rest alone.
+
+<PRE><FONT color=#dfbfff face=System>
+//RiEvEr BETTER JUMPING FOR SURE
+void()  bot_jump1		=[	$rockatt2,	bot_jump2	] {};// let the bot get off the ground first
+void()  bot_jump2		=[	$rockatt2,	bot_jump3	] {jump_forward();};
+void()  bot_jump3		=[	$rockatt2,	bot_jump4	] {};
+void()  bot_jump4		=[	$rockatt2,	bot_jump5	] {};
+void()  bot_jump5		=[	$rockatt2,	bot_walk1	] {};
+//R BJFS
+</FONT>
+</pre>
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's it - they now jump when they get to a ledge, if it's safe to do so. Play with it, improve it, let me know in Coffee's forum what you did - or about any problems you have :)
+
+&nbsp;<P>&nbsp;<P>&nbsp;<P>
+ 
+<HR align=center SIZE=3 width="100%">
+
+<CENTER><H3>What We Learned</H3></CENTER>
+1. Coffee does not get drunk when writing tutorials<BR>
+2. The QuakeC trace function is very useful.<BR>
+3. Sometimes it's worth being a little more complicated<BR>
+4. There is still no number four.
+<P><P><P><P>
+
+<CENTER>&nbsp;<P>
+<HR align=center SIZE=3 width="100%">
+Author: RiEvEr<BR>
+Questions: <A href="mailto:riever@planetquake.com">riever@planetquake.com</A><BR>
+AI chat on ICQ: 25649000<BR>
+<HR align=center SIZE=3 width="100%">
+</CENTER></FONT>
+
+</BODY>
+</HTML>
+
+

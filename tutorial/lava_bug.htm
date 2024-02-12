@@ -1,0 +1,108 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>No Jumping Into Lava</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is one of those tutorials that everyone has been asking for, that everyone has been waiting for. Well, people, here it is: after this, your bot will no longer jump into lava or slime. Or at least he will cut down dramatically on that most foolish of behaviors.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What we must do is rather simple: check for those dangerous liquids when the bot detects a gap in front of him. If he sees them, he must not jump over or into that gap. Thus we will be inserting our new code into his gap-checking routine, which is named check_for_ledge(), and which begins like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() check_for_ledge =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local vector spot;
+
+// movetogoal() will never move over a legde, so we have to 
+// check for a break in front of him and force him to jump
+
+	if (random() < 0.80)
+		return;
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yours may not look like that because of changes you have made, but this is the native state of this routine. Anyway, we will call our new subroutine here, so after that stuff add the following lines:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (should_not_jump())
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I gave this new sub a title that would make sense in English; if he should not jump at this location, then he will leave the subroutine. I hope I haven't lost you with that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Since we call a new subroutine, we might as well write one. Paste the following stuff above the check_for_ledge() sub:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() should_not_jump =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local vector spot;
+local float result, a;
+
+	result = FALSE;
+	makevectors (self.angles);
+	spot = self.origin + (v_forward * 60);
+
+	while (a < 20)
+		{
+		spot = spot - '0 0 10';
+		if (pointcontents(spot) == CONTENT_SOLID)
+			a = 20;
+		if (pointcontents(spot) == CONTENT_LAVA || pointcontents(spot) == CONTENT_SLIME)
+			result = TRUE;
+		a = a + 1;
+		}
+
+	return result;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first thing that you (should) notice is that this is a float, which means it will return a value, in this case, true or false. Next we create a temporary float that will store our result, and we start it off as FALSE. Next we start with a spot that is 60 Quake units in front of the bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, we will begin a while loop. What we're doing here is using the value a as our counter, adding one to it for each execution of the loop. Also, during each execution we are subtracting 10 z units from our spot location. This means that our spot is getting lower and lower for every execution of the loop.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In other words, we check one location in space, then drop down and check a lower one. Basically, you could say that the bot is looking downward a total of 200 Quake units below him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If the bot detects solid rock, he reached the bottom of the gap, so we set our counter to 20, thereby ending the loop. If the bot sees lava or slime in any of the locations he is checking, he sets the result to true. When our counter reaches 20, the loop stops executing.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After the loop, we return whatever value we have; if the bot detected no lava or slime, the result is still false. If he did see some, the result is true, which means that he "should_not_jump" at this time. Get it?<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The unfortunate thing about this routine is that you are taxing your CPU a bit. After all, we are checking 20 different areas in space for almost every frame the bot is walking, and for every bot as well. You may or may not be concerned of this.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In either case, it might be a good idea to tweak and experiment with this new subroutine. You could make the while loop longer than 20 turns. You could make the increment between spaces more than 10 units. See what works best for your bot, your system, and your maps.<BR>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. while loops can be used to execute a certain number of tasks<BR>
+2. a bot has to manually check for lava or slime<BR>
+3. vectors are made up of 'x y z' components<BR>
+4. x and y are horizontal units while z is a vertical measurement<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Email: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+
+</BODY>
+</HTML>

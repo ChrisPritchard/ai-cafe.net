@@ -1,0 +1,262 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Conversation</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you have been studying artificial intelligence for a while, you may have heard of the Turing Test. A layman's explanation: A human being types a series of questions into a machine. He gets a series of answers. If he cannot tell whether he is talking to another human or a computer, it's f#%king great AI.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, something like that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In any case, this lesson won't merely be another one of those silly bot talking tutorials. After this, you will be able to "ask" your bots a few preset questions (or bring up a subject), and they will offer a relevant answer. Moreover, the bots will ask <B>each other</B> these questions.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may not have a use for this lesson; you may be more interested in hardcore AI or mod applications. Then again, you may be looking for just such a thing. In fact, the following code could be developed into a sophisticated algorithm in which your bot would discuss the story, characters, or themes of your mod.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The concept behind this tutorial is very simple. Each question (or subject) is given a number value, and the bots respond to that value randomly. When a bot asks a question, he comes up with a random number that will correspond to one of the questions. Sounds boring, but it turns out pretty cool.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We need to create three new values for our conversation code. Open up defs.qc and paste at the very bottom:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+float group_question;
+float group_talk_time;
+entity group_asker;
+
+void() ask_question;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first is the number value of the question or topic. The second is the delay between when the question is asked and when it is answered. The third is the player or bot who asks the question. The fourth is a new subroutine that we will call before it actually appears.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We might as well get onto the conversation routine itself. Anywhere before the routine bot_stand(), paste this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_answer_question =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float re;
+
+	if (time < group_talk_time)
+		return;
+
+	if (group_question == 0)
+		{
+		group_question = floor(random() * 4) + 1;
+		ask_question();
+		group_talk_time = time + 4;
+		group_asker = self;
+		return;
+		}		
+
+	if (group_asker == self)
+		return;
+
+	bprint(self.netname);
+
+	re = floor(random() * 7);
+
+//	how is everyone?
+	if (group_question == 1)
+		{
+		if (re == 0) bprint(": i'm feeling anxious\n");
+		if (re == 1) bprint(": feeling the killer instinct\n");
+		if (re == 2) bprint(": doing well thanks\n");
+		if (re == 3) bprint(": i'm ready to get it on!\n");
+		if (re == 4) bprint(": i'm feeling good, looking good\n");
+		if (re == 5) bprint(": doing better than you, loser\n");
+		if (re == 6) bprint(": i've seen better days\n");
+		}
+
+//	do you like this map?
+	if (group_question == 2)
+		{
+		if (re == 0) bprint(": no, it blows rats\n");
+		if (re == 1) bprint(": doesn't have enough ammo\n");
+		if (re == 2) bprint(": it needs more weapons\n");
+		if (re == 3) bprint(": i prefer ztndm3\n");
+		if (re == 4) bprint(": the textures are cool\n");
+		if (re == 5) bprint(": yeah, this level rox!\n");
+		if (re == 6) bprint(": i've played better maps\n");
+		}
+
+//	you all suck 
+	if (group_question == 3)
+		{
+		if (re == 0) bprint(": just like your mama\n");
+		if (re == 1) bprint(": no way, i rule\n");
+		if (re == 2) bprint(": same to you pal\n");
+		if (re == 3) bprint(": well, you suck harder\n");
+		if (re == 4) bprint(": shut up, llama\n");
+		if (re == 5) bprint(": i can kick your ass\n");
+		if (re == 6) bprint(": you'll regret saying that\n");
+		}
+
+//	what's your favorite weapon?
+	if (group_question == 4)
+		{
+		if (re == 0) bprint(": the RL rox d00d!\n");
+		if (re == 1) bprint(": the perforator suits my needs\n");
+		if (re == 2) bprint(": i'd enjoy a railgun\n");
+		if (re == 3) bprint(": super shotgun all the way\n");
+		if (re == 4) bprint(": all the Q1 weapons suck\n");
+		if (re == 5) bprint(": come here i'll show ya\n");
+		if (re == 6) bprint(": uh, i like the BFG\n");
+		}
+
+	group_question = 0;
+	group_talk_time = time + 300;
+	group_asker = world;
+
+	sound (self, CHAN_VOICE, "misc/talk.wav", 1, ATTN_NONE);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This may be long, but it is very simple. Let's take it step by step. If the group_talk_time has not expired, we leave the routine. If no one has posed a question, the current bot will call a new routine to ask one, initialize the new variables, then leave the routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If there is an active question hanging out there and the current bot was the one who asked it, he will let someone else answer by leaving the routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We create a random number. We then print out an appropriate response according to that random value and the number value of the question (there will be seven possible replies to four possible questions).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lastly, we reset our three new variables, and end our routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, now I know these questions and responses may seem, um, simplistic. As always, I wrote them quickly. I think they are mildly amusing. Of course, I'm sure you will want to change anything, and possibly everything.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may also add to the number of questions or responses. After you think of new conversation, it will be easy to insert into this subroutine. The cool thing about this algorithm is that it supports not only questions, but statements, as you can see.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yet another dynamic aspect of this system is that more than one bot can respond to the current question, thereby simulating an ongoing group discussion. In other words, you could change the bottom of the routine to look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+//	group_question = 0;
+	group_talk_time = time + floor(random * 3) + 3;
+	group_asker = self;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here we rem out the first line, thus the group_question will stay the same. We reset the group_talk_time, and then set the group_asker to the current bot. Now, a diferent bot will respond to the same question in the next three to six seconds. (Of course, this would work best with a bunch of bots and a lot of potential replies.) Remember that this is an optional change.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's move on. You should have noticed that the bot call a routine which we have not yet written. Thus, let us paste the following above the previous routine:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() ask_question =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float re;
+
+	group_talk_time = time + 4;
+	group_asker = self;
+
+	bprint(self.netname);
+
+	re = floor(random() * 3);
+
+	if (group_question == 1)
+		{
+		if (re == 0) bprint(": how is everyone?\n");
+		if (re == 1) bprint(": how are you all doing?\n");
+		if (re == 2) bprint(": how's everybody feeling?\n");
+		}
+	if (group_question == 2)
+		{
+		if (re == 0) bprint(": do you like this map?\n");
+		if (re == 1) bprint(": anybody like this level?\n");
+		if (re == 2) bprint(": this map is cool, huh?\n");
+		}
+	if (group_question == 3)
+		{
+		if (re == 0) bprint(": you all suck the big one\n");
+		if (re == 1) bprint(": you guys all suck\n");
+		if (re == 2) bprint(": all of you suck bigtime\n");
+		}
+	if (group_question == 4)
+		{
+		if (re == 0) bprint(": what's your favorite weapon?\n");
+		if (re == 1) bprint(": what weapon do you prefer?\n");
+		if (re == 2) bprint(": which gun do you guys like?\n");
+		}
+
+	sound (self, CHAN_VOICE, "misc/talk.wav", 1, ATTN_NONE);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again, this is straight-forward code. We initialize two variables. We print the guy's name. We generate a random number. The bot asks the new question, with some randomly chosen wording. The next bot will respond to that question after four seconds expire.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, we must tell the bots to check the bot_answer_question() subroutine. Add this line somewhere in the routines bot_stand() and bot_walk():<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot_answer_question();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So now your bots will talk to each other.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For such a nifty feature, that wasn't a lot of work. We just have one more thing to do, which is to enable the player himself to pose a question. Save and close tutor.qc, then open up weapons.qc, where impulses are processed. Drop down near the bottom, where you will find the routine ImpulseCommands(). Inside it, add the following code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 200)
+		{
+		group_question = 1;
+		ask_question();
+		}
+	if (self.impulse == 201)
+		{
+		group_question = 2;
+		ask_question();
+		}
+	if (self.impulse == 202)
+		{
+		group_question = 3;
+		ask_question();
+		}
+	if (self.impulse == 203)
+		{
+		group_question = 4;
+		ask_question();
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Swell. If the player types impulse 200, he will ask the first question, impulse 201 the second question, and so on. Yes, he will call the same routine that the bot does, because it does not include any bot-specific code. After four seconds, a bot will reply to the query.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, I realize that pulling down the Quake console and manually typing in "impulse 204" is lengthy and dull, but there is a better way. You can include the following lines in your config.cfg or autoexec.cfg files:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+bind F1 "impulse 200"
+bind F2 "impulse 201"
+bind F3 "impulse 202"
+bind F4 "impulse 203"
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now the player can press F1 through F4 to ask one of the four questions. Much more fun this way. Remember that the wording of the question will be different every time too.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I know that it would be much cooler if the player could type in his own question. But that would involve
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That brings this lesson to a close. I think the right coder could take this conversation idea a long way. But the key is to tweak it, add questions, add responses. You could lengthen the discussions. You could make the responses relate to the bot's class or character. You could apply this code to monsters or NPCs in your conversion.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Take it and make it yours.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Global variables can pass info from player to bot to bot<BR>
+2. We can do creative things with impulse commands<BR>
+3. Life is much, much easier thanks to random numbers<BR>
+3. Never under-estimate the conversational prowess of a deathmatch bot<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+
+</BODY>
+</HTML>

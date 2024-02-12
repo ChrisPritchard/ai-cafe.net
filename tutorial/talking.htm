@@ -1,0 +1,233 @@
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Talking</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Forget about multiple attack paterns. Forget about strategic thought. Forget about navigation algorythms.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The most important aspect of bot intelligence is talking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After all, what would a bot be if he didn't say hello, tell you about himself, insult you. Well, I guess he'd be the Tutor Bot. But that will change with this lesson.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We we learn how to give our bot an Intelligent Vocal Exposition System. That is, he'll say stuff. For this we will need two new variables, half a dozen doughnuts, an old towel, a corkscrew, and something leather.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Crack open defs.qc, where so many variables are defined. We shall introduce our new ones. Go to the very end and paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.float talk_time;
+.float talk_subject;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These variables look to be self-explantory. But briefly, when self.talk_time has elasped, the bot will say something. What he'll utter depends on self.talk_subject.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Note: .talk_subject could very well be a string value, but I think that integer values take up less system memory, and I'm always conscious of that).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we need to find some occassions for him to talk. Save that and open tutor.qc. Slide down to bot_search_for_items() and look at this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() bot_search_for_items =
+// ------------------------------------------------
+{
+local entity item;
+
+// he gives up on that item and marks it to avoid it for a while
+	if (time > self.search_time && self.goalentity != world)
+		{
+		self.goalentity.search_time = time + 30;
+		self.goalentity = world;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;He has just given up on finding something here. He's frustrated. Good time for him to complain. Change that if block to look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time > self.search_time && self.goalentity != world)
+		{
+		self.goalentity.search_time = time + 30;
+		self.goalentity = world;
+		self.talk_subject = 1;
+		self.talk_time = time + 0.1;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uh huh. We told him to talk about subject number one during the next frame of animation. So scroll your butt on down until you see this here stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_grab_items =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+// sees if he's close enough to pick that item up
+
+	if (self.goalentity == world)
+		return;
+
+	if (vlen(self.origin - self.goalentity.origin) <= 70)
+		{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Can you guess what you're going to do now? You are going to paste the following right after that:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		self.talk_subject = 2;
+		self.talk_time = time + 0.1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, this is nothing that an M.I.T. grad wouldn't understand. Just kidding. It's the same idea as before. Duh!<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, he just grabbed an item, and he wants to boast. Let's move on. Move down to the routine bot_walk(), which begins like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_walk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+// this is his main AI routine, where he will look for items and enemies
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay. this routine is his most common thought, so he will check his talk_time and call the talking code from here. So after the above, paste the below:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time > self.talk_time)
+		bot_talk();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple. In fact, this whole tutorial is so simple, I could've wrote it in Spanish and you'd still get it. Next.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Go down to the routine respawn_bot(). He is just being reborn after dying. He's likely pissed. He should get it off his chest. At the very bottom of that sub, before the last bracket, add this ingenious piece of programming:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.talk_subject = 3;
+	self.talk_time = time + 3;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By now, you are an expert in this (even though it does nothing as of right now). Except, he waits three seconds before speaking. Let's go onto the last talking instance. At the very bottom of the next routine, create_bot(), where he is being born, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.talk_subject = 4;
+	bot.talk_time = time + 3;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, check that out! Something different. Here we refer to the new entity "bot" because the self is the player creating the bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And that's it! Virtually painless! Congratulations on your new bouncing, talking bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Huh, what's that you say? The bot doesn't say anything? Oh, yeah, that's correct. We have one last thing to do: the talking subroutine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Do you know where we put that? Remember, we already called it. If we put it at the very end of tutor.qc, our QuakeC compiler would give us one of those damn "unknown void() bot_talk" type errors. So we need to put it in before we call it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Go back up to bot_walk(), and before that routine, paste this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_talk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float talk;
+
+	if (random() < 0.5)
+		{
+		self.talk_subject = 0;
+		self.talk_time = time + 60;
+		return;
+		}
+
+	talk = floor(random() * 6);
+	bprint(self.netname);
+
+	if (self.talk_subject == 0)
+		{
+		if (talk == 0) bprint(": i ate my Wheaties today\n");
+		else if (talk == 1) bprint(": it's fun being a bot\n");
+		else if (talk == 2) bprint(": somebody pass the coffee\n");
+		else if (talk == 3) bprint(": i'm really bored\n");
+		else if (talk == 4) bprint(": don't call me Frog\n");
+		else bprint(": wish i could play CTF\n");
+		}
+	if (self.talk_subject == 1)
+		{
+		if (talk == 0) bprint(": i hate this damn map\n");
+		else if (talk == 1) bprint(": this level blows\n");
+		else if (talk == 2) bprint(": i can't find a thing\n");
+		else if (talk == 3) bprint(": damn, i give up\n");
+		else if (talk == 4) bprint(": i feel lost\n");
+		else bprint(": my navigation sucks\n");
+		}
+	if (self.talk_subject == 2)
+		{
+		if (talk == 0) bprint(": i like this level\n");
+		else if (talk == 1) bprint(": yeah baby yeah!\n");
+		else if (talk == 2) bprint(": i'm stocking up now\n");
+		else if (talk == 3) bprint(": i love these goodies\n");
+		else if (talk == 4) bprint(": i'll take this here item\n");
+		else bprint(": those tuts are paying off!\n");
+		}
+	if (self.talk_subject == 3)
+		{
+		if (talk == 0) bprint(": i hate gettin fragged\n");
+		else if (talk == 1) bprint(": i'll get you for that\n");
+		else if (talk == 2) bprint(": i really stink\n");
+		else if (talk == 3) bprint(": i'll take my revenge soon\n");
+		else if (talk == 4) bprint(": don't do that again\n");
+		else bprint(": oh my god, you killed me!\n");
+		}
+	if (self.talk_subject == 4)
+		{
+		if (talk == 0) bprint(": whoa this server is fast!\n");
+		else if (talk == 1) bprint(": hey everybody\n");
+		else if (talk == 2) bprint(": step aside, i'm here\n");
+		else if (talk == 3) bprint(": it's time to frag!\n");
+		else if (talk == 4) bprint(": dying time is here\n");
+		else bprint(": greetings everyone\n");
+		}
+
+	sound(self, CHAN_VOICE, "misc/talk.wav", 1, ATTN_NONE);
+	self.talk_subject = 0;
+	self.talk_time = time + 60;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nice, very nice. This is an easy routine. First, the bot should not babble endlessly, so it checks a random value and perhaps leaves the routine. Then it generates a random number. It prints the bot's name. It prints a message based on his subject and the random value. It even makes that little beeping sound like when a player talks.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then it clears his subject and resets his talk time. You can change the 30 to something higher if you don't want him to chatter on. Note: the subject zero is when he doesn't have a subject, so he just talks about himself.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now of course, you are free to edit any and all of this speech. Indeed, I expect you to. I wrote it in about 2 minutes. I know you're just dying to add your own dialogue. You can also add more subjects if you find other reasons for him to talk. For instance, if he just made a frag, scored a goal, got a certain power-up, whatever.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your homework assignment is to have fun.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Bots should do everything a player does, including talk<BR>
+2. A bot can speak on any subject, even presidential interns<BR> 
+3. Again, variables relating to time are useful to bots<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

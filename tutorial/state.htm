@@ -1,0 +1,159 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Fuzzy State Machines</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whether you know it or not, you own a finite state machine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These machines are marvels of the modern age. They slice, they dice, they julienne. They look good in the kitchen or family room. They come in handy portable models. If you put one in your pocket, it will ...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Um, just kidding. Truthfully, these machines work in modes like walking, running, standing, and more. These activities are called finite states because each performs a specific function, and they are seperate from each other.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Thus, finite state machine (FSM) is the term for most computer-controlled enemies in video games. Space invaders shoot or fly. Pacman ghosts roam or chase. Doom imps stand or fight. And because of an unimpressive history like this, finite state machine has almost served as a derogatory term.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You have likely figured out that your bot is a finite state machine; it either stands, walks, or runs. Very simple behavior. The true alternative to FSMs, however, are neural networks, genetic algorithms, and other complicated techniques not feasible for tutorials or deathmatch.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have already done work to improve our FSM system, like the fleeing or chasing during the run state. Because the bot makes varying decisions in those instances, he is employing a simple form of fuzzy logic. Thus he becomes a fuzzy state machine (FuSM). We can build on this.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bot AI will be limited, no matter what, since deathmatch itself is limited. A player will never have to rest, eat, repair, sleep, build, or whatever. Consequently, if that new bot by a good programmer you recently downloaded doesn't seem all that fun, its because deathmatch doesn't offer him any exciting opportunities.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That leaves us with two options: brainstorm for new finite sub-states or expand the gameplay of deathmatch. We will do a bit of both.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, since we know bots are inherently more simplistic, let us look at the behavior of a human player. What states might he be in that our bot is not? That's a pretty easy question, really.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The human contestant might get mad when he is fragged, so he might be in a "hunt" mode. Similarly, he may enter this "hunt" state when he picks up a quad or carries the rocket launcher. In this "hunt" mode, he may merely run swiftly though the level, avoiding all other items, in search of the ratbastard that killed him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lucky for us, this "hunt" state is easy to replicate in the bot AI. Drop down to the routine bot_walk(). At the beginning after the bracket, add this:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (is_hunting())
+		return;
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here the bot checks to see if he "is hunting," and if so, he leaves the routine. Since he will do that, he will not look for or go after any items. He has one thing on his mind. Before bot_walk() now, add this new routine:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() is_hunting =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	if (self.weapon != IT_ROCKET_LAUNCHER)
+		return FALSE;
+
+	if (walkmove(self.angles_y, 20) == FALSE)
+		movetogoal(20);
+
+	makevectors(self.angles);
+	self.flags = self.flags - FL_ONGROUND;
+	self.velocity = self.velocity + v_forward * (self.speed * 2);
+
+	return TRUE;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is our new finite sub-state. Nothing very special, just different. If he is carrying a rocket launcher, he will hunt around. Then, if you will notice, he will travel at twice his normal speed. This may be a little cheating, but since we cannot actually give the bot the benefit of true emotion (like the player has), we will tweak him a bit. Change it if you wish.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, we do employ a different navigational method here. The normal methods, like coffee_move(), are not set up to handle the double "hunting" velocity that we want to do. Also notice that he will be moving towards the world (basically randomly) until he finds an enemy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This may or may not seem effective to you. We can agree, though, that it takes time for any bot to collect items. Indeed, a bot maybe spend 10 or more seconds on trying to get a hard-to-reach pick-up. Here we will save that time, allowing the bot to find an enemy all the more quickly.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second, we can give the bot a new state by writing it into the rules of a deathmatch mode. How about this: in our new mode, all the health boxes are removed. The contestants can gradually regain health by "resting," or standing still.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's get the health part out of the way. Define a new variable called .float rest_time at the bottom of defs.qc. Next, open items.qc and scroll down to the routine PlaceItem(), where items are born. Add the following at the beginning:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.classname == "item_health")
+		{
+		remove(self);
+		return;
+		}
+</FONT>
+</PRE>
+		
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, go to bot_stand() and add the following stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time > self.rest_time && self.health < 100)
+		{
+		self.health = self.health + 1;
+		self.rest_time = time + 1;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If his health is below 100, he will get one point of health each second he stands. Easy. (Note: you can also add this to the routine player_stand1() in player.qc.) Now let's move onto the bot's decision-making.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The most common and logical time for him to decide to enter his new "rest" state is right after battle. So, move down to bot_run(), where you'll see this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time > self.search_time || self.enemy.health <= 0)
+		{
+		self.goalentity = world;
+		self.enemy = world;
+		self.pausetime = time + 4;
+		self.th_stand();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There he is checking enemy status and possibly leaving the "fight" state. The native Tutor Bot code will tell the bot to stand for several seconds. We want to refine this. <B>In between</B> those brackets, put this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		if (self.health < 100)
+			{
+			self.pausetime = time + (100 - self.health);
+			self.th_stand();
+			return;
+			}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright now, this is easy enough to comprehend. If his health is less than normal, he will "rest" for the amount of minutes he needs to recuperate (see, I can do <B>some</B> math!). You may also add this to the routine bot_walk() if you want to make your little guy very health-conscious.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If, in the spirit of this tutorial, you want your bot to use more fuzzy logic, use the following code instead of the previous:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		if (self.health < 100 && self.weapon != IT_ROCKET_LAUNCHER)
+			{
+			self.pausetime = time + (100 - self.health);
+			self.th_stand();
+			return;
+			}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here, the bot says to himself, "If I have a rocket launcher, then I'm brave enough not to rest." That's pretty fuzzy, huh? At least he won't make the same decision in every instance.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, it's true that the new "rest" mode is basically camping, but at least it has a tangible function. Remember, this is Quake; we're not going to make our bot jump rope or breakdance.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whell. We have two new behavioral sub-states for our bot to enter. Others would be relatively easy to implement. On top of that, we have discovered how to make him less of a finite state machine and more of a fuzzy state machine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The moral of the story is to avoid black-and-white behavior. Get rid of that walk-or-run thinking, that if-then thinking. Let your finite bot grow into a fuzzy bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Um, yeah.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. finite states include stand, walk, and run<BR>
+2. most computer game monsters are finite state machines<BR>
+3. fuzzy state machines try to enhance their simple modes with variable decision-making<BR>
+4. bots should do more than just collect items and fight<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>
+

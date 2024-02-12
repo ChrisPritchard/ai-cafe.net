@@ -1,0 +1,61 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Alternate Target Leading</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I have never been able to figure out target leading. You know, where the bot shoots ahead of you to try to hit you in motion. In Quake, direction is all screwy. Its all relative. There is no absolute left or right, not even an absolute x or y. Everything is relative.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I couldn't figure out where the player would be next. He might be traveling forward or backward, but what if he were strafing? But then I saw that great tutorial by <A HREF="mailto:skinski@storm-1.freeserve.co.uk">SkinSki</A>, and it gave me an idea. Much much thanks go out to him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After peering at his lesson, two words came to me: his velocity. No matter where you think the player may go, he is traveling in the direction of his velocity. And of course, a player velocity is a vector, just like a player origin. Thus, we can simply add his velocity to his origin, and boom, we know his next location.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let us open up the tutor.qc file, and let us scroll down to bot_aim_at_enemy(). I am sure yours looks different now, so here is what the new one should look like:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+
+	if (self.enemy.velocity)
+		return normalize( (self.enemy.origin + (self.enemy.velocity * 0.6) ) - self.origin);
+
+		return normalize(self.enemy.origin - self.origin);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Man I love simple things. That's it; that is realistic bot leading. This does almost the same thing as SkinSki's great tutorial.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If the bot's enemy is moving, then we multiple that velocity by 0.6, add it to that origin, and we get our lead location. Try it out. If you want to experiment, try 0.4 or 0.8 as an offset. They work well too.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This subroutine works very well. He will actually shoot ahead of you. And since it is based on your velocity, he will lead you even if you are falling or jumping. Of course, you can do with this what you want. By now you likely have a few different aiming routines. This one works better with some weapons. I suggest you try different aiming techniques for different guns, and mix perfect, imperfect, and lead aiming.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nuff said.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Sometimes, you really do have to do math to get good AI<BR>
+2. If you can do something one way, you can do it another<BR>
+3. Velocity is a vector just like origins are<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</BODY>
+</HTML>
+

@@ -1,0 +1,88 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Better Jumping</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, you gotta agree with me... the Tutor Bot bot can't jump for beans!
+So were gonna try and fix THAT! so read on!!!<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open Tutor.qc and look for THIS<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() check_for_ledge =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local vector spot;
+
+// movetogoal() will never move over a legde, so we have to 
+// check for a break in front of him and force him to jump
+
+        if (random() &lt; 0.80)
+                return;
+
+        if (!(self.flags &amp; FL_ONGROUND))
+                return;
+
+        makevectors (self.angles);
+        spot = self.origin + (v_forward * 60);
+        spot = spot - '0 0 35';
+        if (pointcontents(spot) == CONTENT_EMPTY)
+                bot_jump1();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And replace that WHOLE thing with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() check_for_ledge =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local vector spot;
+
+        if (!(self.flags &amp; FL_ONGROUND)) //&nbsp;The bot can ONLY jump if he is on the ground
+                return; // If he's not then don't jump
+
+        makevectors (self.angles); // Jump the way he's a facin
+        spot = self.origin + (v_forward * 5); // Coffee put that at 60.. I&nbsp;think he was drunk 
+        spot = spot - '0 0 45'; // WOW&nbsp;he's checking WAY&nbsp;to deep for a ledge!&nbsp;Let's fix that! (Higher value = Less deep)
+        if (pointcontents(spot) == CONTENT_EMPTY) //Look for a empty content!
+                bot_jump1(); //&nbsp;Tell him to jump
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;Feel free to change and PLEASE&nbsp;experiment! It's the way of a true QuakeC master!<BR>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Coffee get's drunk<BR>
+2. One piece of AI can affect a whole lota stuff<BR>
+3. Pointcontents() checks the world for a substance<P>
+
+<CENTER><P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="MS Sans Serif"><FONT SIZE=+0>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Renegade<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:jsneep@shaw.wave.ca?question=Question">jsneep@shaw.wave.ca<BR></A>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 4437290</FONT></FONT><BR>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center></P></CENTER>
+
+</BODY>
+</HTML>

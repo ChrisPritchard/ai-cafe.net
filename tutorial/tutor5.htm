@@ -1,0 +1,111 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<FONT FACE="Impact" SIZE=+3>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER>Strafing Like A Player</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One of the biggest differences between monsters and players is strafing; players do, monsters don't. Strafing during combat is probably the most effective way to kick ass.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today we'll teach our enforcer to strafe and shoot. It's quite simple, in fact. First, open the file ENFORCER.QC and scroll down to his attack sequence, which begins like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()	enf_atk1	=[	$attack1,	enf_atk2	] {ai_face();};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we want to paste the following code before that attack sequence:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() ai_strafe =
+{
+	self.ideal_yaw = vectoyaw(self.enemy.origin - self.origin);
+	ChangeYaw ();
+
+	ai_run_slide();
+	
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Good. That is the subroutine which will make him move from side to side. There is no magic or mystery here. It's actually id's code. His ideal yaw is the direction he should face, and ChangeYaw() turns him to it. Then ai_run_slide() makes him strafe.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After ai_strafe(), we must add the following sequence:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()	enf_strafe1	=[	$attack1,	enf_strafe2	] {ai_strafe();};
+void()	enf_strafe2	=[	$attack6,	enf_strafe3	] {ai_strafe(); enforcer_fire();};
+void()	enf_strafe3	=[	$attack1,	enf_strafe4	] {ai_strafe();};
+void()	enf_strafe4	=[	$attack6,	enf_strafe5	] {ai_strafe(); enforcer_fire();};
+void()	enf_strafe5	=[	$attack1,	enf_strafe6	] {ai_strafe();};
+void()	enf_strafe6	=[	$attack6,	enf_strafe7	] {ai_strafe(); enforcer_fire();};
+void()	enf_strafe7	=[	$attack1,	enf_strafe7	] {ai_strafe();
+if (visible(self.enemy))
+	enf_strafe1();
+	else enf_run1();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Great. As you can see, this animation scene is made of only two frames, $attack1 and $attack6. I merely copied these out of his attack routine. You really don't need a lot of animation when you're strafing.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The subroutine ai_strafe() is called each time, so he'll always strafe. Then, every other frame, he shoots his laser with enforcer_fire(). Simple.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You'll see some code dangling down from enf_strafe7. Let me explain. When you strafe, you normally don't shoot three nails and quit, right? You normally strafe until you kill your enemy, or until you run out of ammo.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Our enforcer will act similarly. He won't stop strafing until he can't see you, then he'll begin running. Here's what that last bit of code means in English:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If I can see my enemy, I will repeat my strafing. If I can't, I'll think my normal running thoughts."<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can compile now. The enforcer will strafe back and forth, firing his laser until you're toast. If you want him to be even more like a player, however, replace the whole routine called enforcer_fire() with the following code:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() enforcer_fire =
+{
+	local vector org;
+
+	sound (self, CHAN_WEAPON, "weapons/spike2.wav", 1, ATTN_NORM);
+	self.effects = self.effects | EF_MUZZLEFLASH;
+
+	makevectors (self.angles);
+	org = self.origin + v_forward * 30 + v_right * 8.5 + '0 0 16';
+
+	launch_spike (org, self.enemy.origin - self.origin);
+	newmis.touch = superspike_touch;
+	setmodel (newmis, "progs/s_spike.mdl");
+	setsize (newmis, VEC_ORIGIN, VEC_ORIGIN);		
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yeah baby, yeah. What I did here was change the sound and model from a laser to a nailgun. Basically I looked at the player's nailgun routine and the enforcer's firing routine and combined them.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The enforcer will now do some kick-ass strafing with a Perforator. That's the truth, the whole truth, and nothing but the truth, so help me God.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Monsters usually act slow, but you can make them faster<BR>
+2. Each creature's animation scenes usually have too many frames<BR>
+3. The function visible() is very important when fighting<BR>
+4. We can use id routines like ai_run_slide() and ai_back() for evasion<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

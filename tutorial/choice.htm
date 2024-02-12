@@ -1,0 +1,120 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Weapon Preferences</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the quest to make our bot more personable, we have forgotten one little thing: weapon selection. Right now the Tutor Bot always uses the best weapon. This isn't always the case with real players.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Perhaps this was irrelevant before, since the bot started off with a weapon and didn't pick anymore up. But if you've completed and added to my waypoint lesson, your bot can probably pick up a ton of guns.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will be a short tutorial. Some of you may have done something similar already. We will be telling the bot to choose a preferred weapon or an imperfect weapon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The former half of that, weapon preferences, will only work if you have your bots marked individually. That is, they may have a class, personality variable, skill level, or some other individual characteristic. Thus, this section may not help you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's do the weapon preference now. I'm not going to get into which kind of bot would use a perforator and which would use a grenade launcher. I will base my bot's preference on his skin. In other words, the Duke Nukem bot will prefer the rocket launcher, and the Crusader bot will like the nailgun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In tutor.qc, scroll down to bot_bestweapon(), and replace it with this (if you are doing this part):<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() bot_bestweapon =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	local	float	it;
+	
+	it = self.items;
+
+	if (self.skin == 0 && self.ammo_shells >= 2 && (it & IT_SUPER_SHOTGUN) )
+		return IT_SUPER_SHOTGUN;
+	else if (self.skin == 1 && self.ammo_cells >= 2 && (it & IT_LIGHTNING) )
+		return IT_LIGHTNING;
+	else if (self.skin == 2 && self.ammo_rockets >= 1 && (it & IT_ROCKET_LAUNCHER) )
+		return IT_ROCKET_LAUNCHER;
+	else if (self.skin == 3 && self.ammo_rockets >= 1 && (it & IT_GRENADE_LAUNCHER) )
+		return IT_GRENADE_LAUNCHER;
+	else if (self.skin == 4 && self.ammo_nails >= 2 && (it & IT_SUPER_NAILGUN) )
+		return IT_SUPER_NAILGUN;
+	else if (self.skin == 5 && self.ammo_nails >= 1 && (it & IT_NAILGUN) )
+		return IT_NAILGUN;
+
+	else if (self.ammo_shells >= 2 && (it & IT_SUPER_SHOTGUN) )
+		return IT_SUPER_SHOTGUN;
+	else if (self.ammo_cells >= 2 && (it & IT_LIGHTNING) )
+		return IT_LIGHTNING;
+	else if (self.ammo_rockets >= 1 && (it & IT_ROCKET_LAUNCHER) )
+		return IT_ROCKET_LAUNCHER;
+	else if (self.ammo_rockets >= 1 && (it & IT_GRENADE_LAUNCHER) )
+		return IT_GRENADE_LAUNCHER;
+	else if (self.ammo_nails >= 2 && (it & IT_SUPER_NAILGUN) )
+		return IT_SUPER_NAILGUN;
+	else if (self.ammo_nails >= 1 && (it & IT_NAILGUN) )
+		return IT_NAILGUN;
+
+		return IT_SHOTGUN;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, the only difference between this and the old routine is the "self.skin == 2 &&" parts in each if/then statement in the first half. Remembering that skin zero is the first skin, the bot with the first skin will select the super shotgun if he has it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And since all of these if/then statements are linked with else statements, that first-skin bot will skip down to the second half of the routine if he does not own the super shotgun. Put another way, if he can't have his first choice, he will go with the best choice.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course my criteria here is skin. Your bot may have a float like "self.personality" or "self.bot_class." And if your bot does not have an individual trait variable, maybe now's the time he should get one.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you think individual personalities are hooey, that's fine. You're wrong. But we will move onto the more universal imperfect weapon choice. Paste the following routine over the old one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() bot_bestweapon =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	local	float	it;
+	
+	it = self.items;
+
+	if (random() < 0.4 && self.ammo_nails >= 1 && (it & IT_NAILGUN) )
+		return IT_NAILGUN;
+	else if (random() < 0.4 && self.ammo_shells >= 2 && (it & IT_SUPER_SHOTGUN) )
+		return IT_SUPER_SHOTGUN;
+	else if (random() < 0.4 && self.ammo_rockets >= 1 && (it & IT_GRENADE_LAUNCHER) )
+		return IT_GRENADE_LAUNCHER;
+	else if (random() < 0.4 && self.ammo_cells >= 2 && (it & IT_LIGHTNING) )
+		return IT_LIGHTNING;
+	else if (random() < 0.4 && self.ammo_shells >= 2 && (it & IT_SHOTGUN) )
+		return IT_SHOTGUN;
+	else if (random() < 0.4 && self.ammo_rockets >= 1 && (it & IT_ROCKET_LAUNCHER) )
+		return IT_ROCKET_LAUNCHER;
+	else if (random() < 0.4 && self.ammo_nails >= 2 && (it & IT_SUPER_NAILGUN) )
+		return IT_SUPER_NAILGUN;
+
+		return IT_SHOTGUN;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Brain surgery this ain't. I did three simple things. One, I shuffled the lines. Two, I added a random number condition. Three, I threw an extra shotgun line in there.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, I said it was going to be a short tutorial. Obviously the first half --weapon preference-- was more interesting. I hope I got you thinking more about bots as individuals.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Maybe you will edit and add to these subroutines. Perhaps you are working on a QuakeC combo patch with tons of different weapons, and you want certain bots to use certain weapons. In any case, the lesson is over.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Weapons are labeled with an IT_ prefix<BR>
+2. Weapon are stored with bitwise math<BR>
+3. I still don't understand bitwise math<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

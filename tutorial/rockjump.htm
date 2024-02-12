@@ -1,0 +1,149 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Rocket Jumping</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By the end of this tutorial, your bot will know how to rocket-jump. Woo ha.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What, I don't sound enthusiastic? No, I am. Bot rocket-jumping is one of those sexy topics, a feature that looks great in your readme.txt file. There just isn't a frequent need for it in a game.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may not like my approach to rocket-jumping. It doesn't utilize all kinds of realistic physic. It's one of those Coffee Quick Jobbies, but hey, it works.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step one. We will first look at when the bot should execute this sexy maneuver. Before the AI sub bot_walk(), add this routine:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() rock_jump1;
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() should_rocket_jump =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	if (self.goalentity == world)
+		return FALSE;
+	if (!visible(self.goalentity))
+		return FALSE;
+	if (!(self.flags & FL_ONGROUND))
+		return FALSE;
+	if (self.goalentity.origin_z < self.origin_z)
+		return FALSE;
+	if (self.health < 25)
+		return FALSE;
+	if (vlen(self.origin - self.goalentity.origin) > 250)
+		return FALSE;
+
+	self.angles_y = vectoyaw(self.goalentity.origin - self.origin);
+	self.angles_x = -25;
+	rock_jump1();
+	return TRUE;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, check that shit out. We want to make the bot decide when to rocket jump. Here, if any of these conditions are false -- for instance, if he has no goal entity to jump to -- he will leave the subroutine. If he's higher than his goal, if he's too far away, et cetera, he'll do the same.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If all the criteria are right, he will face his goal item. then he will tilt downward to the ground. Then he'll execute the animation routine (also notice that we declare the animation scene before this subroutine). Lastly, he will return the value TRUE, telling himself that he rocket-jumped. Oh so nifty.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step two. Alright, now we need that animation scene. For neatness sake, we will put that with our other animation, which is near the bottom of tutor.qc. For instance, find the sequence starting with bot_light1(), and put the following after it:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  rock_jump1		=[	$rockatt1,	rock_jump2	 ] {};
+void()  rock_jump2		=[	$rockatt2,	rock_jump3	 ] {do_rocket_jump();};
+void()  rock_jump3		=[	$rockatt2,	rock_jump4	 ] {};
+void()  rock_jump4		=[	$rockatt2,	rock_jump5	 ] {};
+void()  rock_jump5		=[	$rockatt2,	rock_jump6	 ] {self.angles_x = 0;};
+void()  rock_jump6		=[	$rockatt2,	bot_walk1	 ] {};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is pretty simple. I chose the first two frames of the rocket attack, so it looks as though he is firing (have you caught on yet that he won't?). In the second frame, he performs the actual rocket jump. In the fifth frame, he straightens himself out. When done, he returns to walking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step three. We have to write the jumping part. Go back up to the routine we just did, should_rocket_jump(). Before or after it, place this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() do_rocket_jump =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity exp;
+local float dam;
+
+	exp = spawn();
+	exp.movetype = MOVETYPE_NONE;
+	exp.velocity = '0 0 0';
+	setmodel(exp, "progs/s_explod.spr");
+	setorigin(exp, self.origin);
+	exp.solid = SOLID_NOT;
+	exp.think = s_explode1;
+	exp.nextthink = time + 0.1;
+	WriteByte (MSG_BROADCAST, SVC_TEMPENTITY);
+	WriteByte (MSG_BROADCAST, TE_EXPLOSION);
+	WriteCoord (MSG_BROADCAST, self.origin_x);
+	WriteCoord (MSG_BROADCAST, self.origin_y);
+	WriteCoord (MSG_BROADCAST, self.origin_z);
+
+	dam = floor(random() * 20) + 10;
+	T_Damage (self, self, self, dam);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	makevectors(self.angles);
+	self.velocity = self.velocity + (v_forward * 400);
+	self.velocity_z = self.velocity_z + 500;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oh, the trickery. In this code, we create an entity. This entity becomes a fake explosion underneath the bot. We then damage the bot a little (for, eh, realism) and propel him into the air. Hence, a bot rocket jump. See, no messy physics.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step four. Slip down to bot_walk(), which begins like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_walk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+// this is his main AI routine, where he will look for items and enemies
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (should_rocket_jump())
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here he wonders if he should do the nasty. If so, he leaves the routine, since he will be executing an animation sequence.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step five. There is no step five. That's the end. As I promised, your bot will now rocket jump, bot-style. There are many different things to tweak in these three routines, and I expect you to tweak them. I don't rocket jump myself, so I don't really care about it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can add realism, more damage, a higher jump, more frequent use, whatever. The hard part is getting the bot to rocket jump when you're around to see it. With this code he doesn't seem to find many opportunties. Check out ztndm3.bsp maybe. Anyway, that's all I have to give to today. Enjoy.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. You can use new entities for many things<BR>
+2. Void() won't return a value, but float() will (like TRUE or FALSE)<BR>
+3. Origins are broken into x, y, and z<P> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

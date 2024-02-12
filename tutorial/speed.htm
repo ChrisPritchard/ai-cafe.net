@@ -1,0 +1,271 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Speed</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I introduced my velocity code in an earlier tutorial, so this one won't be entirely new. But since I think my velocity system is one of the best things I've written, I thought I'd go into more detail on it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you know, id software's walkmove() and movetogoal() statements, which I call code-based movement, are rather slow. So slow, in fact, that they make the Tutor Bot look rather dumb at first, even though he isn't.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may also know that more so-called advanced bots, like the Reaper and FrogBot, use velocity movement. This is quite difficult to manage, and the results are not always preferable. I personally think the Frogbot looks drunk with his sideways walking. Another thing, velocity movement does not navigate for itself like code-based movement would.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I am more interested in what the bot can play or do, as opposed to how much like a player he moves. I didn't want to spend three months on making him slide down a ramp. I wanted easy navigation and fast velocity. So, I combined them.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In other words, I will use walkmove() to navigate and then give the bot a little "push" with velocity movement. This takes four lines of code. It looks as smooth as any other bot. And it's adjustable to any speed. How you like me now?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's take a look at this and see if I'm really as good as I want you to believe. Open up tutor.qc and scroll down to the routine bot_walk() where you'll see this code:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.goalentity != world)
+		movetogoal(20);
+		else coffee_move();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here, if the bot has a goal item, he will use movetogoal() to navigate toward that item. If not, he'll use my wall-hugging roam routine. Pretty simple, but pretty easy. The problem is that movetogoal() is slow. Thus we want to add our new speed code. Change that stuff to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.goalentity != world)
+		{
+		movetogoal(20);
+		makevectors(self.angles);
+		self.flags = self.flags - (self.flags & FL_ONGROUND);
+		self.velocity = v_forward * self.speed;
+		}
+		else coffee_move();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boo-yah. That's the new velocity code. You see, he still uses movetogoal() to get to his object. But right after that statement, we figure out what direction he's facing, and give him a little push. The rate of the push is stored in self.speed, which we will set later.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You also see a line concerning self.flags. You could say that line lifts him off the ground a little bit, but it really doesn't; it only makes QuakeC think so. The other thing you need to know about that line is that our new speed code won't work without it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notice that I put the speed code only after movetogoal. It does not appear after coffee_move(). This is because the speed code pushes him directly forward, and coffee_move() will make him go to the left or right. That would end up in some messy movement.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Speaking of coffee_move(), that is our next change. Since that routine may go left or right, we have to determine which direction he will go, and then adjust our speed code to push him left or right. Therefore, go ahead and replace your old coffee_move() routine with this new one:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ******************************
+void() coffee_move =
+// ******************************
+{
+
+// this is the best subroutine i've ever written, and probably the
+// most powerful bot roaming function. i hope you credit me if you use
+// it. basically he strafes along a wall, then turns at a 45 or -45
+// degree angle at the wall's corner. i have seen my bots do laps
+// around entire levels with these three lines of code
+
+	if (walkmove (self.angles_y, 20) == TRUE)
+		{
+		makevectors(self.angles);
+		self.flags = self.flags - (self.flags & FL_ONGROUND);
+		self.velocity = v_forward * self.speed;
+		return;
+		}
+
+	if (walkmove (self.angles_y + self.button1, 20) == TRUE)
+		{
+		if (self.button1 == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * self.speed;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * self.speed * -1;
+			}
+		return;
+		}
+
+	self.angles_y = self.angles_y + (self.button1 / 2);
+
+// every so often, he'll change his wall-hugging direction
+
+	if (random() <= 0.02)
+		if (self.button1 == 90)
+			self.button1 = -90;
+			else self.button1 = 90;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, don't be afraid of the length. Conceptually, think is that same routine. Here's a summary: If he can go forward, we push him forward with v_forward. If he is going right, we push him right with v_right. If he is going left, we push him left with ... wait, there is no v_left in QuakeC. But what is the opposite of right? Yup, negative right. So we push him forward with v_right time negative one.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remember that we are pushing him at the speed of self.speed. The v_right only represents a direction, and self.speed is the actual velocity.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's all you need to know about the new coffee_move(). If it's too long or too weird for you, don't worry. It works. Nuff said.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That takes care of his walking movement. But we want to add our new speed code anywhere we see walkmove() or movetogoal(). There should be two other places. One is bot_strafe, a fighting routine. Yours may look very different by now, so I'm only going to deal with the original. In that, you should see code looking like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() bot_strafe =
+// ----------------------
+{
+// this routine is called every frame during combat, 
+// so he strafes and dodges even while shooting
+
+	bot_check_ammo();
+
+	if (!visible(self.enemy))
+		{
+		movetogoal(20);
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There's a movetogoal(), so we want to add our speed code. Make that last bit look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (!visible(self.enemy))
+		{
+		movetogoal(20);
+		makevectors(self.angles);
+		self.flags = self.flags - (self.flags & FL_ONGROUND);
+		self.velocity = v_forward * self.speed;
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop down a little and you'll see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// chasing the player here
+	else if (self.weapon == IT_SUPER_SHOTGUN)
+		movetogoal(20);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We will change that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// chasing the player here
+	else if (self.weapon == IT_SUPER_SHOTGUN)
+		{
+		movetogoal(20);
+		makevectors(self.angles);
+		self.flags = self.flags - (self.flags & FL_ONGROUND);
+		self.velocity = v_forward * self.speed;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Good, we're done with bot_strafe(). We want to keep our speed code inside brackets so it's seperate from anything else he may do. As I said earlier, you're bot_strafe() routine may look very different. Just remember that anywhere you see a walkmove() or movetogoal(), you want to add those three new lines of code, and try to keep it all in brackets.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have one last change, the routine bot_run_slide(). This is an important one to change, because the faster a bot strafes, the better an opponent he is. So change your bot_run_slide() to this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// --------------------------------
+void() bot_run_slide =
+// --------------------------------
+{
+local float	ofs;
+	
+// this is a cool strafing routine
+
+	if (self.lefty)
+		ofs = 90;
+	else
+		ofs = -90;
+
+	if (walkmove (self.angles_y + ofs, 20))
+		{
+		if (ofs == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * self.speed;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * self.speed * -1;
+			}
+		return;
+		}
+
+	self.lefty = 1 - self.lefty;
+
+	walkmove (self.angles_y - ofs, 20);
+
+		if (ofs == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * self.speed;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * self.speed * -1;
+			}
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, like the new coffee_move(), this is a lot longer. But like that new routine, this operates the same. If he is strafing left, we push him left; if he's strafing right, we push him right. End of story.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, assuming that you have found all your other movetogoal() and walkmove() statements and changed them accordingly, we have just one addition to make, the easiest. We have to set his self.speed. Here is where we can have a lot of fun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, unlike the Reaper or FrogBot's velocity system, ours is easiely customized. You can even have bots that run at different speeds. His self.speed can be as low as one, or as high as 1000. However, I recommend a minimun/maximum range of 25, which is very slow, to 800, which is likely too fast. Recall that the player's default speed is 320, which is stored in the console variable sv_maxspeed. Let's just choose 200 for now. Go down to the create_bot() subroutine, and add this around the middle:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.speed = 200;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boom, your shiny new bot speed system is ready to run. If you're one of those fair-minded guys, you can do this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.speed = cvar("sv_maxspeed");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The bot will move exactly as fast as the player If the user prefers to turn up his speed, the bot will move quicker too. If you like to have fun, try this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.speed = floor((random() * 6) + 1) * 100;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hehe, cool. This creates a random number from one to six and multiplies it by 100. Thus, a random bot speed from, 100 to 600 will be created, meaning that each bot will run and strafe at a different rate. You could incorporate this into a difficulty system. I like it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And there you have it. After this, I guarantee that the Tutor Bot doesn't look like a dumb, slow bot anymore. In fact, this system is so powerful and versatile that I should charge you for it. But you wouldn't pay me anyway.<BR>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. makevectors() results in v_up, v_forward, and v_right<BR>
+2. the flag FL_ONGROUND locks a player or bot to the floor<BR>
+3. movetogoal() thinks for itself, but moves very slowly<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</BODY>
+</HTML>
+

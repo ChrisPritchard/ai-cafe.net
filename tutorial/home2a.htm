@@ -1,0 +1,133 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Homework Assignment No. 2 Answer</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ding ding. The bell has rung, and we're back in class. Your second homework assignment is due. I'm ready to dole out discipline to any class clowns who aren't prepared.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your project was to create bot orders, particularly camping and roaming. If you could get the first one, then you could get the second. And they were both pretty simple.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's do this in logical order. Of course you would need input from the player. That always comes from the subroutine ImpulseCommands() in player.qc. There, you would need to insert lines like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse = 150)
+		order_bot_camp();
+	if (self.impulse = 151)
+		order_bot_roam();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simply enough. We can now take two typed impulses from the player. But we called two subs that we don't yet have. The fastest place to put them is right before ImpulseCommands(). There, you would paste the following:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() order_bot_camp =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity bot;
+local float found_bot;
+
+	if (teamplay == 0)
+		{
+		bprint("teamplay not active\n");
+		return;
+		}
+
+	found_bot = FALSE;
+	bot = findradius(self.origin, 1500);
+	while(bot)
+		{
+		if (bot.classname == "bot" && bot.team == self.team && bot.health > 0 && bot.enemy.health <= 0 && visible(bot))
+			{
+			bot.think = bot.th_stand;
+			bot.nextthink = time + 0.1;
+			bot.pausetime = time + 60;
+			bprint(bot.netname);
+			bprint(" will camp\n");
+			found_bot = TRUE;
+			}
+		bot = bot.chain;
+		}
+
+	if (found_bot == FALSE)
+		bprint("no bot around you\n");
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Purdy darn cool. First, if teamplay is zero, we leave. Two, we check all entities in a 1500-unit radius. Third, if we find a visible bot who is alive and on our team and not fighting anyone, we tell him to stand for the next sixty seconds. Next, we print a fancy little message and go onto the next entity in the radius.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Just like magic.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Honestly, that was kinda easy, huh? I hope you came up with that. But if you came up with something different that still works, that's cool.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The roam command is just the opposite. After that routine, paste this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() order_bot_roam =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity bot;
+local float found_bot;
+
+	if (teamplay == 0)
+		{
+		bprint("teamplay not active\n");
+		return;
+		}
+
+	found_bot = FALSE;
+	bot = findradius(self.origin, 1500);
+	while(bot)
+		{
+		if (bot.classname == "bot" && bot.team == self.team && bot.health > 0 && bot.enemy.health <= 0 && visible(bot))
+			{
+			bot.think = bot.th_walk;
+			bot.nextthink = time + 0.1;
+			bot.pausetime = 0;
+			bprint(bot.netname);
+			bprint(" will roam\n");
+			found_bot = TRUE;
+			}
+		bot = bot.chain;
+		}
+
+	if (found_bot == FALSE)
+		bprint("no bot around you\n");
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All I did was copy and paste the camp routine, rename it, and changed a couple of lines. I told him to walk instead of stand. That's it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All we are doing in this assignment is manipulating the bot's thinking. It might not look fancy, but it doesn't have to be fancy. Now a player can press impulse 150 near a bot to tell him to camp in an important place. Maybe it's near a rocket launcher. Maybe it's near the team flag. Maybe it's fancier than it looks.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Remember, to use this tutorial in game, set the console variable teamplay to 1, restart, and type or press impulse 150 or 151 to invoke the bot orders.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, well, well. Did you do alright? Did you even try? I hope you did. If you do all your homework and eat your veggies, you'll grow up to be a big, strong bot author just like your pa.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Findradius() is a common and helpful tool<BR>
+2. Even the player can control aspects of AI<BR>
+3. Big houses can be made of little bricks ( ... think about it)<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

@@ -1,0 +1,185 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Firing Custom Weapons</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay class, raise your hand if you think the weapons the Quake monsters use are boring...<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, that's a lot of hands. We all agree, the grunts and enforcers and others have dumb pea-shooters for guns. Look at a mod like <I>Killer Quake Pack.</I> It was fun not only because it gave you new weapons, but because the enemy bots used these guns, too.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this tutorial we will teach a grunt how to fire a new weapon, say a lavaball launcher. First, we'll start with taking a look at a player weapon subroutine, the rocket launcher for instance.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up WEAPONS.QC and scroll down until you see this:<P>
+
+<B><FONT COLOR="DFBFFF" FACE="System">
+/*<BR>
+================<BR>
+W_FireRocket<BR>
+================<BR>
+*/<BR>
+void() W_FireRocket =<BR>
+{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;entity missile, mpuff;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.currentammo = self.ammo_rockets = self.ammo_rockets - 1;<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sound (self, CHAN_WEAPON, "weapons/sgun1.wav", 1, ATTN_NORM);<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.punchangle_x = -2;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile = spawn ();<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.owner = self;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.movetype = MOVETYPE_FLYMISSILE;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.solid = SOLID_BBOX;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.classname = "missile";<P>
+</B></FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, that's about half the routine. Let's say we want to call this routine from the grunt's perspective. There is nothing here that prevents the grunt from using this part. It creates a new missile, makes it solid, gives it a name. It also creates a recoil effect and subtracts from the player's rockets. This is not relevant to the grunt, but it doesn't hurt anything.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's look at the next part:<P>
+
+<B><FONT COLOR="DFBFFF" FACE="System">
+// set missile speed&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;makevectors (self.v_angle);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.velocity = aim(self, 1000);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.velocity = missile.velocity * 1000;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.angles = vectoangles(missile.velocity);<P>
+</B></FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, now we run into an obstacle. Look at the second line. You see, the function called aim() is the player's auto-aim feature. That is, it looks at the player's location and finds the nearest monster in front of him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This won't work for the grunt, obviously, because he needs to aim at his enemy, and that may not be the nearest monster. But we can let him use the routine by changing that line to this:<P>
+
+<B><FONT COLOR="DFBFFF" FACE="System">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (self.classname == "grunt")<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.velocity = normalize(self.enemy.origin - self.origin);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else missile.velocity = aim(self, 1000);<P>
+</B></FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we're playing with power. Here's what are change says in English:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If the guy who is using this routine is called a grunt, then he should aim straight at his enemy. Or if he's anything besides a grunt, he should use QuakeC's auto-aim feature."<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's easy, isn't it? With this modification, we could call this subroutine from the grunt's brain, and he would fire a rocket at his enemy. Honest. I'm not lying.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By the way, what that line of code does is draw a line from his location (self.origin) to his opponent's location (self.enemy.origin). Don't really worry what "normalize" means. It just sort of smooths out that line.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we are ready for the main event, the grunt's lavaball launcher. We want to replace his stupid shogtun routine with this new weapon. First, open up the file SOLIDIER.QC and scroll down until you see this:<P>
+
+<B><FONT COLOR="DFBFFF" FACE="System">
+void() army_fire =<BR>
+{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vector&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dir;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;entity&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;en;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_face();<P>
+</B></FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's the beginning of his shotgun routine. We want to render it obsolete, so we'll rename it. Change the first line to this:<P>
+
+<B><FONT COLOR="DFBFFF" FACE="System">
+void() army_fire_old =<P>
+</B></FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right, now for the second part, I'm going to assume you know a little bit of QuakeC instead of explaining each line. Just copy the following two routines and paste them *above* the army_fire_old() routine:<P>
+
+<B><FONT COLOR="DFBFFF" FACE="System">
+void() army_lavaball_touch =<BR>
+{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local float&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;damg;<P>
+
+// don't explode on owner<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (other == self.owner)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<P>
+
+// disappear if it hits the sky<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (pointcontents(self.origin) == CONTENT_SKY)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remove(self);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<P>
+
+
+// do some damage<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;damg = 100 + random()*20;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (other.health)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_Damage (other, self, self.owner, damg );<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_RadiusDamage (self, self.owner, 120, other);<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.origin = self.origin - 8*normalize(self.velocity);<P>
+
+// a lava splash effect from Quake's boss<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WriteByte (MSG_BROADCAST, SVC_TEMPENTITY);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WriteByte (MSG_BROADCAST, TE_LAVASPLASH);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WriteCoord (MSG_BROADCAST, self.origin_x);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WriteCoord (MSG_BROADCAST, self.origin_y);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WriteCoord (MSG_BROADCAST, self.origin_z);<P>
+
+// turn into a spirite then disappear<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BecomeExplosion ();<BR>
+};<P>
+
+void() army_fire =<BR>
+{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;entity missile, mpuff;<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+// he should face his foe<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_face();<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sound (self, CHAN_WEAPON, "weapons/sgun1.wav", 1, ATTN_NORM);<P>
+
+// create a solid, flying entity<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile = spawn ();<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.owner = self;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.movetype = MOVETYPE_FLYMISSILE;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.solid = SOLID_BBOX;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.classname = "missile";<BR>
+
+// grunt fires straight at his enemy<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.velocity = normalize(self.enemy.origin - self.origin);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.velocity = missile.velocity * 1000;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.angles = vectoangles(missile.velocity);<P>
+
+// what happens when the lavaball hits something<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.touch = army_lavaball_touch;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.nextthink = time + 5;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missile.think = SUB_Remove;<P>
+
+// here's the new model:<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setmodel (missile, "progs/lavaball.mdl");<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setsize (missile, '0 0 0', '0 0 0');<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setorigin (missile, self.origin + v_forward*8 + '0 0 16');<BR>
+};<P>
+</B></FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Basically, these two subroutines are the same as the two for the player rockets. As you see, the only changes are the direction and the model, plus the lava splash effect. During the grunt's attack animation, he will call army_fire(), which is now our new subroutine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Did all that make sense? The important thing to remember is this: when the player fires, he auto-aims, and monsters cannot use the auto-aim feature.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you have some source code from a custom weapon that you like, just look for the line with aim() in it, and change it like we did.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remember though, I'm not responsible for any psychological damage you may suffer when you see a lavaball explode in your face.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Monsters cannot auto-aim<BR>
+2. A monsters aims by drawing an invisible line from his location to his enemy's location<BR>
+3. Many custom weapons will work for monsters<BR>
+4. When a monster fights, everything he thinks relates to "self.enemy," for instance "self.enemy.origin" or "self.enemy.health" or even "self.enemy.weapon"<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

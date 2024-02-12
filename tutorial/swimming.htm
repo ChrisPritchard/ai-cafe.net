@@ -1,0 +1,203 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Improved Swimming</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You could joke that the Tutor Bot and water don't mix. You could quip that the Tutor Bot shouldn't be allowed in the deep end of the pool. You could laughingly say that the Tutor Bot will never win a gold medal in swimming.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yeah, you could make all these jokes, but you'd be a cold-hearted bully that got his jollies at the expense of others. Remember, I meant the Tutor Bot code to be as simple and short as possible. Naturally, I planned to improve his skills all along.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So now is the time to improve his swimming. This will not be easy. We will not perfect his water skills. There are plenty of methods you as a bot author could implement to achieve the best swimming possible. But as with most lessons, we will learn a simple solution here and now.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It is important to note that there are two different goals to reach for while working on bot swimming: collecting items underwater, and getting the hell out of the water. With any luck, will will achieve both of these today. To some extent anyway. Basically, our bot will try looking for items until he runs out of air, then he'll head for the surface.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The file tutor.qc uses the subroutine check_for_water() to see if the bot is submerged in water. This is where it all starts. The beginning of that code looks like so:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() check_for_water =
+// ------------------------------------------------
+{
+local float p;
+
+// bots don't see water like players do, so we check for it
+
+	makevectors(self.angles);
+	p = pointcontents(self.origin + v_forward*16);
+	if (p != CONTENT_WATER && p != CONTENT_SLIME && p != CONTENT_LAVA)
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This part checks a point 16 units in front of the bot for contents other than just air. If it does not detect anything, it leaves the subroutine. We want to change that to the following:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() check_for_water =
+// ------------------------------------------------
+{
+local float p;
+
+// bots don't see water like players do, so we check for it
+
+	makevectors(self.angles);
+	p = pointcontents(self.origin + v_forward*16);
+	if (p != CONTENT_WATER && p != CONTENT_SLIME && p != CONTENT_LAVA)
+		{
+		self.air_finished = time + 10;
+		return;
+		}
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, now if this code does not detect water, it makes sure the bot has ten seconds of air in his cute little lungs. (Oppositely, if it does see water, that air will begin to expire.) Then it leaves the subroutine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In the middle of this routine, you will see the following snippet of code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (p == CONTENT_WATER && time > self.pain_finished)
+		{
+		T_Damage (self, world, world, 5);
+		self.pain_finished = time + 2;
+		sound (self, CHAN_VOICE, "player/gasp2.wav", 1, ATTN_NORM);
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This part damages the bot if he is underwater. We want to change this to reflect the air stored in his lungs. Change it to look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (p == CONTENT_WATER && time > self.pain_finished && time > self.air_finished)
+		{
+		T_Damage (self, world, world, 5);
+		self.pain_finished = time + 2;
+		sound (self, CHAN_VOICE, "player/gasp2.wav", 1, ATTN_NORM);
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We changed the first line, so now he will only "choke" when his air is expired. Cool. Pretty simple, huh. Now we will examine the end of that routine, which looks like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+
+// he'll try to swim upward here
+	self.velocity = self.velocity + (v_forward * 200);
+	self.velocity_z = self.velocity_z + 200;
+	if (random() < 0.4)
+		self.velocity_x = self.velocity_x + 100;
+	else if (random() > 0.8)
+		self.velocity_y = self.velocity_y + 100;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is butt-simple code that basically pushes the bot upward, then left or right. Here we shall make are significant alterations. Change the above code to the below code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (p == CONTENT_SLIME || p == CONTENT_LAVA || time > self.air_finished)
+		{
+		bot_swim1();
+		return;
+		}
+
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I bet you were expecting our changes to be longer than the original code, huh? Well, in this instance what we don't do is just as important as what we do. Here, if slime or lava is detected, the bot will swim upwards (we assume that all bots want to keep on living) and leave the subroutine. If the bot is out of air, he will also try to get out of the water, leaving the subroutine as well.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But if he is underwater and he still has air, he will execute whatever code falls after check_for_water(), which means he will walk around and look for items (as you probably tell him to do in the routine bot_walk(), right?). In other words, if he doesn't begin the routine bot_swim1(), he will continue to use movetogoal() or walkmove() as usual.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, we got the thinking part down. I hope that makes sense to you. I'm not a smart guy, and I can understand it, you know. Next we have to implement the swimming part. We are actually going to do this in a seperate animation script, since the behavior of swimming is significantly different from walking. Go down to the end of your animation section, around the end of the routine bot_diee9(), and add this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_swim1		=[	$rockrun1,	bot_swim2	] {swim_up();};
+void()  bot_swim2		=[	$rockrun2,	bot_swim3	] {swim_up();};
+void()  bot_swim3		=[	$rockrun3,	bot_swim4	] {swim_up();};
+void()  bot_swim4		=[	$rockrun4,	bot_swim5	] {swim_up();};
+void()  bot_swim5		=[	$rockrun5,	bot_swim6	] {swim_up();};
+void()  bot_swim6		=[	$rockrun6,	bot_swim7	] {swim_up();};
+void()  bot_swim7		=[	$rockrun1,	bot_swim8	] {swim_up();};
+void()  bot_swim8		=[	$rockrun2,	bot_swim9	] {swim_up();};
+void()  bot_swim9		=[	$rockrun3,	bot_swim10	] {swim_up();};
+void()  bot_swim10	=[	$rockrun4,	bot_swim11	] {swim_up();};
+void()  bot_swim11	=[	$rockrun5,	bot_swim12	] {swim_forward();};
+void()  bot_swim12	=[	$rockrun6,	bot_swim13	] {swim_forward();};
+void()  bot_swim13	=[	$rockrun1,	bot_swim14	] {swim_forward();};
+void()  bot_swim14	=[	$rockrun2,	bot_swim15	] {swim_forward();};
+void()  bot_swim15	=[	$rockrun3,	bot_swim16	] {swim_forward();};
+void()  bot_swim16	=[	$rockrun4,	bot_swim17	] {swim_forward();};
+void()  bot_swim17	=[	$rockrun5,	bot_swim18	] {swim_forward();};
+void()  bot_swim18	=[	$rockrun6,	bot_swim19 	] {swim_forward();};
+void()  bot_swim19	=[	$rockrun1,	bot_swim20	] {swim_forward();};
+void()  bot_swim20	=[	$rockrun2,	bot_walk1 	] {swim_forward();};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hmm, interesting. This is a script that lasts two seconds. As you can see from the end of each line, the bot will call the routine swim_up() for the first ten frames. He will call swim_forward() for the last ten frames. Thus, he is moving up, then forward, like an upside-down L shape.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Why does he do this, you ask? No, he's not smoking too much crack. As you know, when a player reaches the shore, Quake gives him a little lift to get him out of the water. Bots do not have this benefit, so we have to make him lift himself upward, as if he is jumping out of the water. This allows him to lift himself up onto the land. Take note that he is executing only this and no other code during this little script. Afterward, he will return to the scene bot_walk1().<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course we must now write the two swimming routines. Before that script, paste these two things:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -----------------------------------
+void() swim_up =
+// -----------------------------------
+{
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity_z = 300;
+};
+
+// -----------------------------------
+void() swim_forward =
+// -----------------------------------
+{
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	makevectors(self.angles);
+	self.velocity = v_forward * 300;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These routines do exactly what they say, so that is simple stuff. One last note: near the beginning of the tutor.qc file, you must declare the routine bot_swim1() with a line like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() bot_swim1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And, if I'm not mistaken, that's a done deal. Just keep in mind there are two kinds of swimming AI routines: 1) the perfect swimming AI routine; 2) all the others. And to my knowledge, the perfect swimming AI routine has never been written. So that leaves us all in, um, the same boat, so to speak. What I'm trying to say is that there are a hundred and one ways to improve this improvement.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So what are you waiting for? Get to work.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Bots have to look for water a different way from the way players do<BR>
+2. Swimming is physically different from walking, so it should be handled seperately<BR>
+3. Swimming is better handled with velocity code than movetogoal()<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

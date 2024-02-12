@@ -1,0 +1,189 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Getting Your Own Pet Demon</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you're like me, you've always wanted a pet demon. Ever since I was a wee boy I wished for a leathery, drooling hellhound to love me and follow me around and eat those big bullies.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;QuakeC gives me the opportunity to fulfill this dream, sort of. In fact, you and I both will learn how to program fiends -- or any other monster -- to escort us and protect us. You got it, man: we're learning how to do a helper bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's get to work. We'll be working with three important subroutines today: FindTarget(), in which creatures look for players, along with the simple ai_walk() and ai_stand(). Simply stated, we don't want the beast to get mad at a player, just to follow him.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First of all, we need to give the fiend a reminder that he's escorting a player. Open up DEFS.QC, the declaration file. Go to the very bottom and insert this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	float ESCORTING = 5;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is what we coders call a "global constant." We will set his attack state to this when he spots a marine. It is 5 because the first 4 attack states were defined already. It will make more sense later. Save that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next step. As with most of id Software's routines, FindTarget() in is ugly and fat. This means you don't have to understand all of it. Most of it relates to how close or near the player is. But open up the file AI.QC, and take a look at the end of that subroutine:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+//
+// got one
+//
+	self.enemy = client;
+	if (self.enemy.classname != "player")
+	{
+		self.enemy = self.enemy.enemy;
+		if (self.enemy.classname != "player")
+		{
+			self.enemy = world;
+			return FALSE;
+		}
+	}
+	
+	FoundTarget ();
+
+	return TRUE;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is the part we need to stop from happening. The "client" is the player who was spotted, and FoundTarget() will make the creature begin attacking him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paste this code *above* that stuff:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.attack_state == ESCORTING)
+		return FALSE;
+
+	if (self.classname == "monster_demon1")
+		{
+		self.goalentity = client;
+		self.attack_state = ESCORTING;
+		self.th_walk();
+		return TRUE;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Damn that was easy. In English, this means: "If I'm already escorting, then I'm done here. If I am a demon, the client will become my goal in life, my state of mind will be to escort, and I will start walking. I will leave the rest of this stinky subroutine."
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now he won't get angry at the player, just start walking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Which brings us to the next step. Find the subroutine ai_walk(), in the middle of this file. Half of our work has been done for us: you'll notice that the last line says "movetogoal(dist)." As you remember, the C function movetogoal() will move the monster toward whatever his "self.goalentity" is, and of course we set this to the player. Right on, brother.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that last line but before the bracket, we will paste this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.attack_state == ESCORTING && vlen(self.origin - self.goalentity.origin) < 80)
+		{
+		self.pausetime = time + 3;
+		self.th_stand();
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The "vlen" means vector length, or the distance between two points in the Quake world. Okay, I bet you want another English explanation. Alright: "If I have already told myself to escort and the distance between me and my goal is short, I'll just stop walking and pause for a bit."<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's right, this line will tell the demon to stand if he gets too close to the player. After three seconds of standing, he'll follow you again.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And there you have it: all of the demons in Quake will follow you around. Huh, what's that? You want them to fight for you, too? Damn, I'm gonna have to start charging for these tutorials, you're getting demanding.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, this last step will be more difficult, but it's still darn simple. Since monsters don't search for other monsters, we'll write our own targeting routine. Paste this above FindTarget():<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+float() FindMonster =
+// ------------------------------------------------
+{
+local entity beast;
+
+	if (self.attack_state != ESCORTING)
+		return FALSE;
+
+	if (self.enemy)
+		return FALSE;
+
+	beast = findradius(self.origin, 1500);
+
+	while(beast)
+		{
+		if ( (beast.flags & FL_MONSTER) && visible(beast) && beast != self && beast.health > 0)
+			self.enemy = beast;
+		beast = beast.chain;
+		}
+	
+	if (!self.enemy)
+		return FALSE;
+	
+	FoundTarget();
+	return TRUE;
+};
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Don't be scared; it's just code. Easy stuff. First, if he's not escorting or if he has an enemy, he won't look for monsters. Next we look at all the entities in a 1500-unit circle around him. Then we analyze all those entities. If it is a monster and if it is visible and it is not the demon and it's alive, then it will become our enemy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If we didn't find an enemy, we'll just leave the routine. If we did, we'll get mad and attack him. That's the end.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Onto our last steps. We have to tell him to use this routine. We are going to be a bit tricky here, and even a little bit smart.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We could tell him to look in his walking and his standing and whatever routines, but that's a bit of pasting. Since id Software told the monsters to use FindTarget() everywhere, we'll use that to our advantage.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The beginning of FindTarget() looks like so:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+float() FindTarget =
+{
+	local entity	client;
+	local float		r;
+
+// if the first spawnflag bit is set, the monster will only wake up on
+// really seeing the player, not another monster getting angry
+
+// spawnflags & 3 is a big hack, because zombie crucified used the first
+// spawn flag prior to the ambush flag, and I forgot about it, so the second
+// spawn flag works as well
+</FONT>
+</PRE>
+
+	Right after the line that reads "local float r" we will paste this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (FindMonster())
+		return TRUE;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We are so slick. You see, FindTarget() is "true" when a monster finds a player. Our subroutine is "true" when our demon finds another monster. We are telling FindTarget() to think it is true when ours is true.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In other words, if our demon finds a creature, he will immediately leave the FindTarget() routine and begin fighting to protect us. Other beasts will just continue thinking it as normal. Bada-bing.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can try this lesson on maps E4M2 and E4M3 I think, but if you have a slower system, it might lag a bit.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A real danger in tutoring -- and in artificial intelligence in general -- is over-thinking, over-explaining. I won't do that here. I think you understand this lesson. I think it was rather simple. I think you see ways you could customize it. So just save, compile, and enjoy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ah, one last note: never abuse a pet demon.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Movetogoal() moves toward a monster's (or bot's) "self.goalentity"<BR>
+2. Creatures don't look for other creatures<BR>
+3. Escorting is a combination of standing and walking<BR>
+4. You don't have to program like id to do something cool<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+

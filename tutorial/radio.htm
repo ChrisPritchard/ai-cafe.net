@@ -1,0 +1,126 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Radioactive Mode</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I really like this tutorial. The idea just came to me, and I knew I had to make a tutorial out of it. Basically, we're gonna add a new game mode to the bot, which I call 'Radioactive Mode'. Rename it if you like.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The great thing about this mode is that it's pretty simple to code, and great fun to play. Ok then, this is how the game will work:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first player into the server is radioactive. He/she is surrounded by a field of glowing, swirling particles to indicate that he is radioactive, which will help other players to spot him. However, as he is radioactive, a mutation allows him to jump twice as high as a normal player or bot. If he is killed, the player or bot who kills him becomes radioactive, and the killed guy becomes normal.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cool idea, huh?<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ok then, let's begin coding. Open up client.qc, and slide down to PutClientInServer. Directly above the routine, paste this:<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+entity radioactive;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This global entity will hold the currently radioactive player or bot. Next, scroll down to the very bottom of PutClientInServer, and put this.<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 7 && radioactive == world)
+		radioactive = self;
+	if (radioactive == self)
+		self.effects = EF_BRIGHTFIELD;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This does a couple of things. Firstly, if the player is the first into the server, it sets him as the radioactive guy. Secondly, it spawns the field of particles. This is an inbuilt function in quake, which was never used by id. It looks great, trust me.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notice that it only does these if the console variable 'deathmatch' is set to 7, so you can still play normal Quake mode if you want to.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, scroll down to the very end of PlayerJump. At the end, stick this:<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (radioactive == self)
+		self.velocity_z = self.velocity_z * 2;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Easy, isn't it. If the player is radioactive, double his jump height.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scroll down to ClientObituary, which begins like so:<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void(entity targ, entity attacker) ClientObituary =
+{
+	local	float rnum;
+	local	string deathstring, deathstring2;
+	rnum = random();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Immediately after that, stick this piece of code:<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 7)
+	{
+		if ((radioactive == targ) && (attacker != targ) && ((attacker.classname == "player") || (attacker.classname == "bot")))
+		{
+			radioactive = attacker;
+			targ.effects = targ.effects - (targ.effects & EF_BRIGHTFIELD);
+			attacker.effects = attacker.effects + EF_BRIGHTFIELD;
+		}
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is all just too easy! If the radioactive guy has just been killed, make the other guy radioactive instead. Simple. Save and close client.qc.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second to final step now. Open tutor.qc and scroll down to jump_forward. At the very end, stick this:<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (radioactive == self)
+		self.velocity_z = self.velocity_z * 2;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now, scroll down to respawn_bot, and at the end of it, stick this.<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (radioactive == self)
+		self.effects = EF_BRIGHTFIELD;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's all there is to it! Now, as a challenge, I'll leave you three ideas for improving this game mode. One is easy, one moderate and one difficult.<p>
+
+<BLOCKQUOTE>
+1. Add a new ability to the radioactive guy, instead of high jumping<br>
+2. Make the bots choose the radioactive guy as a prefered target<br>
+3. Make the bots be able to spot the radioactive guy if they can see the particles<p>
+</BLOCKQUOTE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That last one is VERY hard. Try the other two first.<br>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. id left in some really useful particle effects that they never used.<BR>
+2. New game modes can be easy to do.<BR>
+3. SkinSki can do tutorials which aren't pure AI.<P>
+
+<CENTER><P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="MS Sans Serif"><FONT SIZE=+0>
+Author: SkinSki<BR>
+Questions: <A HREF="mailto:skinski@email.com">skinski@email.com<BR></A>
+AI chat on ICQ: 30578982</FONT></FONT><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center></P></CENTER>
+</BODY>
+</HTML>

@@ -1,0 +1,158 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Exploding Backpack</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today our bot is going to get a little bit devious.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;He will learn how to throw an exploding backpack. Other deathmatchers will see it, try to pick it up, and <I><B>boom!</B></I> it will explode on them. Like my previous tutorials, it's all about giving the bot a personality.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First open TUTOR.QC. Before the routine bot_search_for_items(), paste this new routine:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() fake_backpack_touch =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	if (other == self.owner || other == world)
+		return;
+
+	if (other.takedamage == DAMAGE_AIM)
+		{
+		WriteByte (MSG_BROADCAST, SVC_TEMPENTITY);
+		WriteByte (MSG_BROADCAST, TE_EXPLOSION);
+		WriteCoord (MSG_BROADCAST, self.origin_x);
+		WriteCoord (MSG_BROADCAST, self.origin_y);
+		WriteCoord (MSG_BROADCAST, self.origin_z);
+		BecomeExplosion ();
+		T_Damage (other, self, self, 500);
+		}
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will be the exploding pack's touch routine. Child's play: if a player or bot touches the pack, it creates an explosion, hurts them, and removes itself. I just mimicked the explosion code from WEAPONS.QC. After that place this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// --------------------------------------
+void() drop_fake_backpack =
+// --------------------------------------
+{
+local entity item;
+
+	item = spawn();
+	item.origin = self.origin - '0 0 24';
+	item.velocity_z = 300;
+	item.velocity_x = -100 + (random() * 400);
+	item.velocity_y = -100 + (random() * 400);
+	item.flags = FL_ITEM;
+	item.solid = SOLID_TRIGGER;
+	item.movetype = MOVETYPE_TOSS;
+	setmodel (item, "progs/backpack.mdl");
+	item.classname = "explopack";
+	setsize (item, '-16 -16 0', '16 16 56');
+	item.owner = self;
+	item.touch = fake_backpack_touch;
+	item.nextthink = time + 240;
+	item.think = SUB_Remove;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Just another entity creation routine; you've likely seen a bunch of them. The bot throws an item that looks like a backpack and feels like a rocket. Heehee. Oh, by the way, two things: one, it will not blow up on him and two, since it is flagged as an item, other bots will go for it. Heeheehee.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The next step is to scroll down to bot_search_for_items(). We don't want the owner of the explopack trying to pick it up, but we want the others to get it. You should see this code:<BR> 
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// checks a radius around him for items
+	item = findradius(self.origin, 1500);
+
+	while(item)
+		{
+		if ( (item.flags & FL_ITEM) && visible(item) && item.model != string_null && time > item.search_time)
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We want to add a condition to that last long line. We want to add "&& item.owner != self", so change that line to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		if ( (item.flags & FL_ITEM) && visible(item) && item.model != string_null && time > item.search_time && item.owner != self)
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The bots will no longer try to get an item that they own, in this case, the exploding pack. Very good.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we need to choose a time when the bot decides to throw an explopack. It could be in several routines, and it could be often or seldom. For now, let's just decide on bot_walk(). Paste this code at the bottom of that routine (right before the bracket):<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (random() <= 0.02)
+		if (random() < 0.5)
+			drop_fake_backpack();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So he will randomly decide when to throw one. This is a pretty good frequency. Maybe you think it's too much or too little. Please feel free to change it, move it, or edit it. It's up to you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One thing remaining. We want to give the explopack's owner a frag when someone gets gibbed by it. So save that file and open CLIENT.QC. Slide down to ClientObituary() where you will see the following:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void(entity targ, entity attacker) ClientObituary =
+{
+	local	float rnum;
+	local	string deathstring, deathstring2;
+	rnum = random();
+
+	if (targ.classname == "player" || targ.classname == "bot")
+	{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The "targ" here is a client that just got killed. After the bracket, paste this stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		if (attacker.classname == "explopack")
+		{
+			bprint (targ.netname);
+			bprint (" enjoyed ");
+			bprint (attacker.owner.netname);
+			bprint ("'s exploding backpack\n");
+			attacker.owner.frags = attacker.owner.frags + 1;
+			return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This code does what it looks like it does: if the client killer was a backpack, it prints a funny little message, gives the owner a point, and exits the subroutine. You can change the message if you like.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And we come to the close of another tutorial. I kinda like this one; when I was playtesting it, I became afraid to pick up any backpacks! Now that's good AI for ya &nbsp;&nbsp;:)<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Entities can do anything you want them to<BR>
+2. An entity's touch routine is usually important<BR>
+3. Random numbers can help a bot decide realistically<BR> 
+4. Simple AI normally equals fun AI<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

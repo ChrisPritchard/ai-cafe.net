@@ -1,0 +1,116 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Bot Camera</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Have you ever wondered what it's like to be a bot? No? Why not? I think about that a few times a day. Anyway, today we will find out what life is like as a bot. Well, specifically, we will be able to see what a bot sees.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This lesson is a bot camera. You will be able to type an impulse and see what your bot sees. This can be helpful if you need to observe his navigation. Ot it can be just plain cool to look at.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All our work takes place in weapons.qc, so open that. Scroll down to the routine ImpulseCommands(). Before it, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() player_stand1;
+
+// ------------------------
+void() make_bot_cam =
+// ------------------------
+{
+
+	self.goalentity = find(self.goalentity, classname, "bot");
+
+	if (self.goalentity.classname != "bot" || self.goalentity.health <= 0)
+		{
+		msg_entity = self;                         
+		WriteByte (MSG_ONE, 5);    
+		WriteEntity (MSG_ONE, self);           
+		WriteByte (MSG_ONE, 10);  
+		WriteAngle(MSG_ONE, self.angles_x);    
+		WriteAngle(MSG_ONE, self.angles_y);    
+		WriteAngle(MSG_ONE, self.angles_z);
+		bprint("Back into your body.\n");
+		W_SetCurrentAmmo ();
+		player_stand1 ();
+		return;
+		}
+
+	self.weaponmodel = "";
+	self.think = bot_cam_think;
+	self.nextthink = time + 0.01;
+	bprint("Looking through ");
+	bprint(self.goalentity.netname);
+	bprint("'s eyes.\n");
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There's a little technical crap in this, but you don't need to know it. The rest is easy. We look for a bot and mark it as the player's self.goalentity. If he already has a bot as a goal entity, it skips to the next bot in the entity list. In other words, we can scroll through all the bots in the game.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If there are no more bots in the entity list, the player jumps back into his body. Thus, this bot camera feature works as a toggle. I think the rest of it is too simple to explain, really.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we have to make the think routine for the camera. Paste this before the previous stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------
+void() bot_cam_think =
+// ------------------------
+{
+
+	msg_entity = self;                         
+	WriteByte (MSG_ONE, 5);    
+	WriteEntity (MSG_ONE, self.goalentity);
+
+	WriteByte (MSG_ONE, 10);  
+	WriteAngle(MSG_ONE, self.goalentity.angles_x);    
+	WriteAngle(MSG_ONE, self.goalentity.angles_y);    
+	WriteAngle(MSG_ONE, self.goalentity.angles_z);
+
+	self.angles = self.goalentity.angles;
+	self.fixangle = TRUE;
+	
+	self.think = bot_cam_think;
+	self.nextthink = time + 0.01;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yeah, yeah, more dull technical stuff. We're just writing bytes into Quake so the player's viewport will show what the bot sees. Remember, self.goalentity is the current bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then we write the angles, and we tell the camera to think again in the next 0.01 seconds. It'll do that over and over.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last little change. Go into ImpulseCommands() and paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 103)
+		make_bot_cam();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now when you type impulse 103 into the console (or bind it to a key and press it), the bot eye camera will turn on. Easy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Maybe this lesson seems simple, but now you know how to manipulate what the player sees. Try messing around with the camera. If you could make an entity fly behind the bot, you could make a bot chase camera.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Try out your new botcam. You'll see that it ain't easy being a bot.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. You can change what the player sees<BR>
+2. That's it, I think<BR>
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

@@ -1,0 +1,213 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Sneaking Past Monsters</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+
+
+We all know that creature intelligence for years has been lacking in, well, intelligence. But it has been missing another important aspect: fun. Most monsters are simply boring to kill, even if they are strafing. <P>
+They just have no character, and no other point of living. This is beginning to change, even if in small ways. For instance, the infantrymen in Quake 2 flex their muscles while they stand.<P>
+Another example of this comes from the new Half-Life. I read that if you enter an industrial complex with your gun drawn, the scientists will put their hands up or trigger the security alarm. But if you have holstered your weapon, they won't pay you any mind.<P>
+That's cool. So let's do it.<P>
+Today's lesson has two parts. First, as above, we'll learn how to make the creatures not notice us for a while if we have our gun holstered. Next, we will discover how to put on a disguise so they'll ignore us indefinitely.<P>
+I told you that AI was easy.<P>
+
+Step one. We must know how to put our weapon away. Since the axe is pretty useless, we'll use it for our holster. Open up WEAPONS.QC and scroll down to the routine W_SetCurrentAmmo(), where it looks like this<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.weapon == IT_AXE)
+	{
+		self.currentammo = 0;
+		self.weaponmodel = "progs/v_axe.mdl";
+		self.weaponframe = 0;
+	}
+</FONT>
+</PRE>
+
+This is where it sets that dumb axe model. We just want it to be blank, with no model. So change the weaponmodel line to look like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.weaponmodel = string_null;
+</FONT>
+</PRE>
+
+The null string is the same thing as this "" which means it has no characters.<P>
+
+Step two. We cannot fire or attack when our weapon is blank, or holstered, so we need to slide down to W_Attack(), where all the attack scenes start. Add the following code at the beginning:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.weaponmodel == string_null)
+		return;
+</FONT>
+</PRE>
+
+This simply says if our gun model is blank, then we should leave the subroutine, thereby not attacking at all. Save the file. Now that perky Quake space marine can holster a weapon.<P>
+Step three. We don't want the monsters to ignore the player forever, because after all, they should know a space marine whent they see one. But we do want the holstered effect to confound them for a few seconds.<P>
+We'll need a new variable to store this delay time. Open up DEFS.QC and go *all* the way to the bottom. Add this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.float delay_time;
+</FONT>
+</PRE>
+
+Not much more to be said here except "save."<P>
+Step four. Open up our favorite file, AI.QC. Obviously we will be working with the monster targeting routine, so slip down to FindTarget(), like right about here:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (sight_entity_time >= time - 0.1 && !(self.spawnflags & 3) )
+	{
+		client = sight_entity;
+		if (client.enemy == self.enemy)
+			return;
+	}
+	else
+	{
+		client = checkclient ();
+		if (!client)
+			return FALSE;	// current check entity isn't in PVS
+	}
+
+	if (client == self.enemy)
+		return FALSE;
+</FONT>
+</PRE>
+
+Let's try something a bit backwards in this tutorial. Let's try our English explanation of what needs to be done first:<P>
+
+"If I am confused, I will not see this player, and I will leave. If this player has a blank weapon, I'm going to get confused."<P>
+
+I hope you understand English, so can you tell me what the QuakeC will look like? Probably like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time < self.delay_time)
+		return FALSE;
+
+	if (client.weaponmodel == string_null && self.delay_time == 0)
+		{
+		self.delay_time = time + 5 + (random() * 5);
+		return FALSE;
+		}
+</FONT>
+</PRE>
+
+Okay, this is very simple, but I can explain two things. One, we had to check to see whether self.delay_time is zero. We only want him to get confused once. We wouldn't want him to keep setting his delay_time over and over. He would never spot you.<P>
+Two, we set his delay time to five seconds plus a few more random seconds into the future. This is more interesting than if each monster ignored you for precisely five seconds.<P>
+I believe we're done. I always feel like I didn't talk enough, but programming can be simple. Now monsters will only wake up to you after a few seconds.<P>
+
+Let's take that a step beyond. The spy class in Team Fortress has that groovy ability to disguise himself and therefore sneak past enemies. We can easily do that with Quake creatures. Come with me.<P>
+Step one. We can be real clean and simple if we use a new variable for this ability. Open up DEFS.QC again, and place this at the very bottom:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.float disguised;
+</FONT>
+</PRE>
+
+This will be a simple true/false marker for when our hero the space marine is disguised. As always, save.<P>
+Next step. Open WEAPONS.QC and travel down to the subroutine ImpulseCommands(). After the first bracket, we want to add this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 100)
+		{
+		if (self.disguised == TRUE)
+			{
+			bprint(self.netname);
+			bprint(" removes his disguise\n");
+			self.disguised = FALSE;
+			return;
+			}
+		bprint(self.netname);
+		bprint(" dons his enforcer disguise\n");
+		self.disguised = TRUE;
+		}
+</FONT>
+</PRE>
+
+Yucky term alert! We just pulled off a "nested if-then" statement. Yuk, I hate new terms. This means that we have one if-then statement resting inside of another. But who cares?<P>
+The important -- and fun -- part is that impulse 100 has become a toggle for our disguise. In other words, if the marine is already disguised, he takes it off and leaves the routine. If he is not in disguise, he puts it on. Save that bad boy.<P>
+Third step. Crack open AI.QC once more, and again scroll down to FindTarget() and this stuff:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (sight_entity_time >= time - 0.1 && !(self.spawnflags & 3) )
+	{
+		client = sight_entity;
+		if (client.enemy == self.enemy)
+			return;
+	}
+	else
+	{
+		client = checkclient ();
+		if (!client)
+			return FALSE;	// current check entity isn't in PVS
+	}
+
+	if (client == self.enemy)
+		return FALSE;
+</FONT>
+</PRE>
+
+After this, we want to paste the following lines:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (client.disguised == TRUE)
+		return FALSE;
+</FONT>
+</PRE>
+
+Step 34 ... just kidding. I said it before, and I'll say it again: we're done. I hate to reveal all these simple secrets about the big bad creature intelligence business; one day I'll end up swimming with a pair of concrete shoes.<P>
+But there it is anyway. The truth is out there, and, of course, it's pretty durn simple. If the marine has his disguise on, all creatures will ignore him. Basically, we're just stopping the monsters from making the client an enemy (remember, "client" is the player he's trying to look at).<P>
+We could make it a little bit more sophisticated or realistic. Try these lines instead of the above two:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if ((self.classname == "monster_army" ||  self.classname == "monster_enforcer") && client.disguised == TRUE)
+		return FALSE;
+</FONT>
+</PRE>
+
+Hmm, different. Here, just the grunts and enforcers will not recognize the marine in disguise. All other monsters will attack. This statement simply says "if I'm a grunt or an enforcer  and he's disguised, I'll ignore him.<P>
+The new parentheses are required, since one of those things *and* the disguise thing must be true.<P>
+Either way, it's easy stuff. It'll be even easier when you play and type impulse 100, since you can sneak past all monsters. Now you can get to work on that Half-Life-to-Quake conversion you've been wanting to do.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. The routine FindTarget() acts as the monsters' eyes<P>
+2. Monsters don't always have to see you<P>
+3. Monsters are pretty fun to screw with<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+

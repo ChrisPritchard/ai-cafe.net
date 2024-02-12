@@ -1,0 +1,87 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Fleeing</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This lesson is pretty darn straight-forward: the bot will learn how to flee when injured. The catch is that bots aren't really good at fleeing. That is, they are not good at getting from room to room easily. If you have spent any time observing bots, you know what I mean.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, we will give it a try. This is a decent subroutine. And of course, you can spend all the time you want tweaking it. Go ahead and open up tutor.qc and scroll down to the subroutine bot_run(), which looks kind of like so:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_run =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+// his fighting thoughts. after a short while, he'll give up 
+// on his enemy, but if he can see him, he'll always attack
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+	check_for_water();
+
+	if (visible(self.enemy))
+		self.search_time = time + 6;
+
+	if (time > self.search_time || self.enemy.health <= 0)
+		{
+		self.goalentity = world;
+		self.enemy = world;
+		self.pausetime = time + 4;
+		self.th_stand();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you know, this is his main attack routine, his combat brain. If his health is under a certain value, we want him to turn around and get the hell outta Dodge. Very simple to do. After the previous code, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.health < 25)
+		{
+		self.angles_y = vectoyaw(self.origin - self.enemy.origin);
+		if (walkmove(self.angles_y, 20) == FALSE)
+			bot_run_slide();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ahem, that's it. I might not be know across the world as a great coder, but I'm sure one of the briefest. A fleeing routine in seven lines. Not bad.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I guess you'll want to know how those seven lines work. If his health is under 25, he will face the exact opposite direction of his enemy (take a look at the routine bot_face(), this is just flip-flopped from that).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then he tries to walkmove in the new direction he's facing. If he cannot -- that is, if he ran into an obstacle -- then he will start strafing. Maybe he can then skirt the obstacle by strafing. Of course, this is a very simple navigation routine; if you want to change it, go ahead. Just insult me, why don't you. See if I care. Ingrate.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The two important notes here are as such: make sure you use the line about self.angles_y, and make sure you do not call bot_face() before this. That would just turn him back towards his enemy. You can even change the injure value, 25, to something higher of lower.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We are now officially done. You may accuse me of many things, but you cannot rightfully say that I waste your time.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Self.angles_y or self.angles_x is the direction a bot faces<BR>
+2. A bot's direction is obviously very important<BR>
+3. Self.angles_y and walkmove() together can be quite powerful<BR>
+4. Read number three again<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

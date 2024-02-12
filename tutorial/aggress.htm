@@ -1,0 +1,118 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Aggressive Bots</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You know, many players measure the quality of a bot by how tough he is. For instance, the Omicron bot is considered the best by many people. Coincidentally or not, he is the toughest to defeat.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;During the new few minutes, we are going to make two simple changes to our bot to make him more aggressive, more difficult to beat. First, he will learn to detect enemies faster. Second, he will not freeze up in pain so often.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With that said, we will slip down to the important subroutine called bot_look_for_players(). This is nearly the same thing as FindTarget() in ai.qc, written by id software. Anyway, look for this part:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	r = range (client);
+	if (r == RANGE_FAR)
+		return FALSE;
+		
+	if (!visible (client))
+		return FALSE;
+
+	if (r == RANGE_NEAR)
+	{
+		if (client.show_hostile < time && !infront (client))
+			return FALSE;
+	}
+	else if (r == RANGE_MID)
+	{
+		if (!infront (client))
+			return FALSE;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, this is distance-related code. If the target is too far, the bot doesn't see him. If the target is close but behind him, the bot dfoesn't see him. We want to change this.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Indeed, we want to get rid of it. So let us "remark" out this code (or you can delete it if you want). We'll put a starting block remark character /* before it and an ending remark character */ after it. It should look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+
+	r = range (client);
+	if (r == RANGE_FAR)
+		return FALSE;
+		
+	if (!visible (client))
+		return FALSE;
+
+	if (r == RANGE_NEAR)
+	{
+		if (client.show_hostile < time && !infront (client))
+			return FALSE;
+	}
+	else if (r == RANGE_MID)
+	{
+		if (!infront (client))
+			return FALSE;
+	}
+
+*/
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Our bot will now spot enemies instantly. This makes him much more formidable. Is this cheating? Perhaps. but you have skills that the bot doesn't (seeing, hearing, feeling). I think he should have a couple abilities that you don't as well.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: if you want this code active again, just remove the remark characters.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Onto our second change we go. You've likely noticed that the Tutor Bot spends a lot of time in pain frames during battle. This is wasted time. Look, he uses no AI during his pain animation sequence:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_pain1		=[	$pain1,	bot_pain2	] {};
+void()  bot_pain2		=[	$pain2,	bot_pain3	] {};
+void()  bot_pain3		=[	$pain4,	bot_pain4	] {};
+void()  bot_pain4		=[	$pain3,	bot_pain5	] {};
+void()  bot_pain5		=[	$pain4,	bot_pain6	] {};
+void()  bot_pain6		=[	$pain6,	bot_run1	] {};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see all the {}; sections? He is not thinking a damn thing. He should be at least calling his evasion routines. We can do that easily. Change the above to the below:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_pain1		=[	$pain1,	bot_pain2	] {bot_strafe();};
+void()  bot_pain2		=[	$pain2,	bot_pain3	] {bot_strafe();};
+void()  bot_pain3		=[	$pain4,	bot_pain4	] {bot_strafe();};
+void()  bot_pain4		=[	$pain3,	bot_pain5	] {bot_strafe();};
+void()  bot_pain5		=[	$pain4,	bot_pain6	] {bot_strafe();};
+void()  bot_pain6		=[	$pain6,	bot_run1	] {bot_strafe();};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There you go. He will now think his evasion routine during each of these frames. Thus he will strafe, circle his enemy, or do whatever you told him to do. He'll be more mobile this way.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, you have to examine every little section of code to get the most out of your bot. There are other simple changes you could make to spotting, pain, and evasion routines to make your bot a more worthy foe. Can you find them?<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Examine each section of code for maximum efficiency<BR>
+2. The bot calls AI routines from animation routines<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

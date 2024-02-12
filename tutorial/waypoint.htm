@@ -1,0 +1,310 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Waypoint Navigation</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, now we're gonna start playing with the big boys.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With this tutorial, you will be able to create and save waypoints to allow your bot to travel anywhere you wish. Although it may be the toughest lesson yet, adding waypoint support is much easier than you think.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First I will describe my waypoint system. Of course, I selected the simplest method possible so you could learn easy. It is a one-path two-way waypoint system. In other words, there is one path of points numbered 1 to, say, 15, through the level. The bot will travel forward through this path; then when he reaches the highest waypoint, he will turn around and go backward.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And for this lesson, that is all he will do. He will not look for items or calculate where he needs to go or anything else. So when you create your waypoints, you should probably create the path so that it crosses weapons and other important items naturally. This works very well.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And I'll tell you something honestly: it's a lot of fun just to watch your bot run around when he knows exactly where to go. Let's get it on.<P>
+&nbsp;<P>&nbsp;<P>&nbsp;<P><HR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step 1. Waypoint Creation</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before anything, we need to be able to create and list the points. This will be done in WEAPONS.QC, so open that up. First we will be declaring some variables. Scroll down to ImpulseCommands() and paste this stuff *before* it:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~ waypoint declarations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.float waypoint;
+.float direction;
+float total_ways;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay. A bot needs to know which waypoint he's at, so that's his self.waypoint. He also needs to know if he's travelling up or down the path, so that's his self.direction. And we both need to know the top number of waypoints, so that is total_ways.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we need to define a waypoint's touch routine. Paste the following code after the declarations and before ImpulseCommands():<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() way_touch =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	if (other.classname != "bot")
+		return;
+
+	if (other.goalentity == self)
+		{
+		other.waypoint = self.waypoint;
+		other.goalentity = world;
+		other.enemy = world;
+		}
+
+// reached highest waypoint and is turning around
+	if (other.waypoint >= total_ways)
+		other.direction = 1;
+
+// he returned to first waypoint
+	if (other.waypoint <= 1 && other.direction == 1)
+		other.direction = 0;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simple stuff so far. When a bot touches a point, he takes its number as his self.waypoint so he knows which one to go to next. Also, as you can see from my remarks, when he reaches the last one he changes his self.direction from 1 (backward) to 0 (forward). He does the oppoosite when he reaches the lowest point.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, we'll have to create this waypoints themselves. Since this takes only a few lines of code, we'll do it right in ImpulseCommands(). Of course, you can make it a separate subroutine if you're a neat freak.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After the line W_ChangeWeapon (); in ImpulseCommands(), paste this stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~ waypoint creation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if (self.impulse == 200)
+	{
+	local entity spot;
+	spot = spawn();
+	spot.origin = self.origin;
+	total_ways = total_ways + 1;
+	spot.waypoint = total_ways;
+	spot.classname = "waypoint";
+	setmodel (spot, "progs/s_bubble.spr");
+	bprint("waypoints set: ");
+	bprint(ftos(total_ways));
+	bprint("\n");
+	spot.flags = FL_ITEM;
+	spot.solid = SOLID_TRIGGER;
+	spot.movetype = MOVETYPE_NONE;
+	spot.touch = way_touch;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, a waypoint is a simple entity. When you press impulse 200, a point will be created where you are standing. The total_ways variable will increase by one, and that waypoint will take that number as its value.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For instance, totals_ways is zero when you start. You press impulse 200, total_ways becomes one, and the waypoint's value becomes one. Press it again, total_ways will be two, and you created the number two waypoint. And of course, we set the point's touch to way_touch(), which we already created.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next will have to be able to print out all the waypoints (so we can paste them into our code later). After that creation code, we want to paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~ waypoint list print ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if (self.impulse == 201)
+	{
+	local entity way;
+	way = find(world, classname, "waypoint");
+	while (way)
+		{
+		bprint("create_waypoint (");
+		bprint(vtos(way.origin));
+		bprint(", ");
+		bprint(ftos(way.waypoint));
+		bprint(");\n");
+		way = find(way, classname, "waypoint");
+		}
+	}
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is nothing fancy. When you type impulse 201, it will search the entity list for all things named "waypoint." Then it will print out a line of code that looks something like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	create_waypoint('-707.4 -72.4 -40.0',1);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, this is in QuakeC form. Therefore, it will be ready for us to copy and paste it into our bot code. Alright, now we can create and list our wondrous waypoints.<P>
+&nbsp;<P>&nbsp;<P>&nbsp;<P><HR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step 2. Waypoint Navigation</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We're onto the bot stuff now. First we want to make a subroutine that helps the bot look for the next point in the path. Open TUTOR.QC and scroll to bot_walk(). Before that routine we want to paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() waypoint_find =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity point;
+
+	point = find(world, classname, "waypoint");
+	while(point)
+		{
+		if (point.waypoint == self.waypoint + 1 && self.direction == 0)
+			self.goalentity = point;
+		if (point.waypoint == self.waypoint - 1 && self.direction == 1)
+			self.goalentity = point;
+		if (self.waypoint == 0 && visible(point))
+			self.goalentity = point;
+		point = find(point, classname, "waypoint");
+		}
+
+	self.search_time = time + 15;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Simply put, this is just another entity-finding routine. We are searching the entity list for anything named "waypoint." Let's do it rest in English:<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If this waypoint is one higher than mine and I'm going forward, I'll take it as my goal entity. If this waypoint is one lower than mine and I'm going backward, I'll select it as my goal entity. If my waypoint number is zero and I can see this waypoint, I'll choose it as my goal entity. Then I'll decide to search for it for 15 seconds."<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we want to add a new little navigation routine that helps the bot. After the previous code, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() waypoint_walk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	if (visible(self.goalentity))
+		{
+		self.angles_y = vectoyaw(self.goalentity.origin - self.origin);
+		if (walkmove(self.angles_y, 20) == FALSE)
+			movetogoal(20);
+		}
+		else
+			movetogoal(20);
+
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * 500;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There's nothing radically new here, but one note: walkmove() is faster and more direct than movetogoal(), but it doesn't steer the bot at all. So here, if the bot cvannot see his goalentity, he'll use movetogoal(). If he can see it, he'll turn toward it and utilize walkmove().<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, I added our velocity code that we learned in a previous tutorial. So now he'll travel at the speed of 500 units.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We're really getting through this lesson now. Next we want to change his bot_walk() routine. In fact, I want you to rename that to bot_walk_old(). Now, before that routine, we want to paste this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_walk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	if (time > self.search_time)
+		{
+		self.goalentity = world;
+		self.waypoint = 0;
+		self.direction = 0;
+		}
+
+	if (self.goalentity == world)
+		waypoint_find();
+
+	if (self.goalentity.classname == "waypoint")
+		waypoint_walk();
+		else movetogoal(20);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I hope you now notice that this tutorial is not that hard. Again, let's hear this subroutine in English:<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If my search time is up, I'll give up on my current goal entity and start all over. If my goal entity is the world, then I'll look for the nearest waypoint. If my goal is a waypoint, I'll use my new nav routine. If not, I'll just use movetogoal()."<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boy, my bot can speak good English, can't he? Anyway, that's it for the waypoint AI. I told you in wasn't that bad. The bot is basically connecting the dots.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoops, I forgot something. When the bot respawns, we want him to start over with his waypoint number and direction, since he probably won't be near his last waypoint. So go to the end of the subroutine respawn_bot() and add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.waypoint = 0;
+	self.direction = 0;
+</FONT>
+</PRE>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now he will restart clean. He'll likely look for and follow the nearest waypoint. Good deal.<BR>
+&nbsp;<P>&nbsp;<P>&nbsp;<P><HR>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>Step 3. Waypoint Compilation</B><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We can now create and list waypoints, and the bot can follow them backwards and forwards. Indeed, at this moment you could save, compile, load a map, create a string of waypoints, and watch your bot go.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But if you're a pretty slick dude (and I hope you are), you've likely been wondering something: where the @#$! do I put my waypoints? Don't be so rude. I'll tell you now.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before you start creating waypoints, I highly recommend you explore the level and decide where you want the path to go. I also recommend a single path that makes a circle around all or most of the level. Remember, the more waypoints you create, the more memory you eat.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, run Quake with the "-condebug" command line option, without the quotes of course. This option will create a text file called "qconsole.log." In this file will be listed everything that was printed to the Quake console.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then make your path using impulse 200 to spawn points (you really should bind that impulse to a key first). After that, spawn a bot and watch how he travels the path. If you like the path and he walks it well, press impulse 201, which will list all the points you created.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Quit Quake and open up the "qconsole.log" file with your text editor. Near the bottom you will see your create_waypoint() lines with the waypoint locations and numbers. This is your waypoint code for that map.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up WORLD.QC and scroll down to the subroutine worldspawn(). Before this routine you will paste this:<BR> 
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void(vector here, float which) create_waypoint =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity ent;
+
+	ent = spawn();
+	ent.solid = SOLID_TRIGGER;
+	ent.movetype = MOVETYPE_NONE;
+	setorigin(ent, here);
+	ent.model = "progs/s_bubble.spr";
+	ent.touch = way_touch;
+	ent.flags = FL_ITEM;
+	ent.classname = "waypoint";
+	ent.waypoint = which;
+	total_ways = total_ways + 1;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This simple entity-spawning routine will create our resident waypoints for the map. Next we will spawn the points themselves. For this you will need to know the name of the map file. I will use the great map "ztndm3" as an example.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I will copy my create_waypoint() lines from "qconsole.log" first. Then inside the routine worldspawn() and after the line InitBodyQue (), I would paste them like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~ waypoint navigation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if (self.model == "maps/ztndm3.bsp")
+	{
+	create_waypoint('-707.4 -72.4 -40.0',1);
+	create_waypoint('-136.9 -5.4 24.0',2);
+	create_waypoint('-97.3 562.2 24.0',3);
+	create_waypoint('242.8 646.2 120.0',4);
+	create_waypoint('-29.2 712.2 216.0',5);
+	create_waypoint('-81.8 170.8 280.0',6);
+	create_waypoint('-442.7 18.8 280.0',7);
+	create_waypoint('9.8 -111.5 280.0',8);
+	create_waypoint('145.1 -422.4 216.0',9);
+	create_waypoint('140.3 -907.0 152.0',10);
+	create_waypoint('-451.3 -748.1 152.0',11);
+	create_waypoint('-656.3 -500.2 216.0',12);
+	create_waypoint('-998.7 -21.8 216.0',13);
+	create_waypoint('-997.0 471.6 284.0',14);
+	create_waypoint('-662.8 679.7 280.0',15);
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, worldspawn() is where the Quake world, and the map itself, is created. Where you see "self.model," the self refers to the world.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this routine, then, I am saying, "If the world's map name is 'ztndm3', spawn these particular waypoints." So you will replace "ztndm3" with your selected map's name. Then you will copy your lines from the console log and paste them over mine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I know all this stuff is wordy, but the concept is simple: when you list your waypoints in Quake, they are ready to be cut-and-pasted into your code with the map name on top. If you like, take these waypoints, download the map ztndm3.bsp from cdrom.com, and try them. they work pretty well.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When you select a second map, repeat the process, just make sure to paste your new waypoint creation code after the previous code.<P> 
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This lesson is probably the hardest yet. Obviously it's a bit longer. But the concepts are simpler than the actual processes. I hoped you grasped them. With waypoints, your bot can roam as good as or better than the Reaper, Omicron, and FrogBot, so it is worth it to understand them.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In fact, you can make your bot go almost anywhere you want him to with little trouble and little calculation. You could even teach him to play games like TF, Jailbreak, or CTF. And if you do this, I want to see your bot.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. The waypoint path is one way, going from 1 to X<BR>
+2. The bot records which point he reached last<BR> 
+3. When he gets to the end, he will turn around<BR>
+4. Your path should circle most of the level once<BR>
+5. Copy your waypoint code from qconsole.log<BR>
+6. When Quake recognizes your map name, it will spawn your waypoints<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

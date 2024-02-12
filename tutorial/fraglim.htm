@@ -1,0 +1,105 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Bot Fraglimits</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Man is this an overdue lesson.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I've been meaning to write this one for months now. It is rather fundamental, and important as well. This will allow your bots to "win games." That is, if he reaches the fraglimit set through the console then the Quake will exit to the intermission screen, just like regular servers.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lucky for us, this tutorial is butt-simple. In fact, it doesn't even require a new subroutine. All we have to do is call the player routine named CheckRules(), which is found in client.qc. This of course checks the player's frags and the time. Here, it looks like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+============
+CheckRules
+
+Exit deathmatch games upon conditions
+============
+*/
+void() CheckRules =
+{
+	local	float		timelimit;
+	local	float		fraglimit;
+
+	if (gameover)	// someone else quit the game already
+		return;
+
+	timelimit = cvar("timelimit") * 60;
+	fraglimit = cvar("fraglimit");
+
+	if (timelimit && time >= timelimit)
+	{
+		NextLevel ();
+		return;
+	}
+	
+	if (fraglimit && self.frags >= fraglimit)
+	{
+		NextLevel ();
+		return;
+	}	
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I believe this is self-explanatory. The cool thing about this routine is that it contains no is player-only code. This allows the bot to use it. Cool.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CheckRules() is called from the routine PlayerPreThink(), which means that the rules are checked before every frame. I don't think we have to check them this often for bots. After all, he will probably only earn frags during battle. Thus, we will choose for our purposes now to check our rules from the subroutine bot_run(). There you will see this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_run =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+// his fighting thoughts. after a short while, he'll give up 
+// on his enemy, but if he can see him, he'll always attack
+
+	if (!(self.flags & FL_ONGROUND))
+		return;
+
+	check_for_water();
+
+	if (visible(self.enemy))
+		self.search_time = time + 6;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add the following after that:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	CheckRules();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Done. You may elect to call this routine more often. You could even call it from the routine bot_walk(), which means it would be called during every one of the bot's frames. I think this works fine. Oh, and remember to set the variabes "fraglimit" or "timelimit" through the console.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I think this must be the shortest QuakeC tutorial in history. You might be wondering why it was neccessary for me to even write a one-line lesson; I would respond by saying that it is very important -- and quite fun -- for the bot to be able to win a game. Not all bot's do this now. That's all.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Some player routines can be called by bots<BR>
+2. Bot should affect a server or game just like players do<BR>
+3. Console variables can be nifty<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

@@ -1,0 +1,459 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Bot Items</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm sure by this point you have come to realize the strength of my waypoint navigation system. However, I'm also certain that you have come to notice its weakness: though the Tutor Bot can now roam a whole level and travel right over items, he can't even pick them up.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is simple to fix. You see, id Software basically locked all of the monsters out of the item touch routines. It's true that the player does possess special physics and features, but our bot can easily be allowed to touch these objects.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, a few simple changes in the file TUTOR.QC. Go down to the routine bot_walk(). You will see a line that says bot_grab_items(). Delete it. Since he will actually be touching items, he won't have to reach out and make them invisible.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then in both respawn_bot() and create_bot(), you will see a call to give_random_weapon(). Delete it from each routine. Since he will be picking up weapons, you won't need to give him any.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we have to add a couple of lines that I forgot. Drop down to the routine respawn_bot(). After the line "self.health = 100", add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.maxhealth = 100;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Drop down to create_bot() and where you see "bot.health = 100" add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.maxhealth = 100;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These two lines just make him ready to be healed by health boxes. Save and close that file. Next open up ITEMS.QC and slide down to health_touch(), where you'll see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() health_touch =
+{
+	local	float amount;
+	local	string	s;
+
+	if (other.classname != "player")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I bet you, being the sophisticated coder you are, can spot our problem already, right? When another entity touches the health box, that entity is the "other." Here, as you can see, our bot is locked out. We want to change those last two lines to:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname != "player" && other.classname != "bot")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Very easy. Now our bot is allowed inside the touch routine. All entities *not* named "player" or "bot" are locked out. We have to edit the routine a bit though. You will see this stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	sprint(other, "You receive ");
+	s = ftos(self.healamount);
+	sprint(other, s);
+	sprint(other, " health\n");
+
+// health touch sound
+	sound(other, CHAN_ITEM, self.noise, 1, ATTN_NORM);
+
+	stuffcmd (other, "bf\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Unfortunately, this code is geared toward a player. A bot cannot accept an sprint() command, nor a stuffcmd() statement. So we will change all of that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+if (other.classname == "player")
+	{
+	sprint(other, "You receive ");
+	s = ftos(self.healamount);
+	sprint(other, s);
+	sprint(other, " health\n");
+	stuffcmd (other, "bf\n");
+	}
+
+// health touch sound
+	sound(other, CHAN_ITEM, self.noise, 1, ATTN_NORM);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here we targeted the player-only code towards entities named player. We also left the sound() command outside the brackets, so when a bot picks up a health box, it will make a sound. Our bot will now be able to touch any health box and be healed.<BR>
+&nbsp;<P>&nbsp;<P><HR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Not onto the routine armor_touch(), where we will encounter the same problems:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() armor_touch =
+{
+	local	float	type, value, bit;
+	
+	if (other.health <= 0)
+		return;
+	if (other.classname != "player")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We will use the same solution as before, changing those last two lines to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname != "player" && other.classname != "bot")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That lets him inside. But again, we have to edit the player-specific code. Drop to the bottom of the routine, where this is:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	sprint(other, "You got armor\n");
+// armor touch sound
+	sound(other, CHAN_ITEM, "items/armor1.wav", 1, ATTN_NORM);
+	stuffcmd (other, "bf\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paste the following code over that crap:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+if (other.classname == "player")
+	{
+	sprint(other, "You got armor\n");
+	stuffcmd (other, "bf\n");
+	}
+
+// armor touch sound
+	sound(other, CHAN_ITEM, "items/armor1.wav", 1, ATTN_NORM);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Just like before, the bot can trigger the sound but not the message. And now our bot can touch and collect armor. Seems too simple, doesn't it? That just goes to show you that id software really didn't foresee the advent of bots.<BR>
+&nbsp;<P>&nbsp;<P><HR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we move to weapon_touch(), which is a bit more involved. Look at this:<BR>
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() weapon_touch =
+{
+	local	float	hadammo, best, new, old;
+	local	entity	stemp;
+	local	float	leave;
+
+	if (!(other.flags & FL_CLIENT))
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, the last two lines are a bit different, but we can still change them to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname != "player" && other.classname != "bot")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That was okay. Now slide down a bit and look at this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	sprint (other, "You got the ");
+	sprint (other, self.netname);
+	sprint (other, "\n");
+// weapon touch sound
+	sound (other, CHAN_ITEM, "weapons/pkup.wav", 1, ATTN_NORM);
+	stuffcmd (other, "bf\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Once more, this is player-only code. We have to change that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+if (other.classname == "player")
+	{
+	sprint (other, "You got the ");
+	sprint (other, self.netname);
+	sprint (other, "\n");
+	stuffcmd (other, "bf\n");
+	}
+
+// weapon touch sound
+	sound (other, CHAN_ITEM, "weapons/pkup.wav", 1, ATTN_NORM);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I know, that's getting repetitive, but we got to do it. A little down past that you will see a line that says W_SetCurrentAmmo(). Change that line to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname == "player")
+		W_SetCurrentAmmo();
+
+	if (other.classname == "bot")
+		bot_set_currentammo();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The subroutine W_SetCurrentAmmo() has a lot of player-only code in it, so we have to tell the bot to stay out of it and to call his own routine. The bot will now pick up the weapon.<BR>
+&nbsp;<P>&nbsp;<P><HR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We move onto ammo_touch(), which is even a bit more involved. It does start off with the same problem, though:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() ammo_touch =
+{
+local entity	stemp;
+local float		best;
+
+	if (other.classname != "player")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That damn id Software again, making our lives difficult. Anyhow, change the last two lines of that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname != "player" && other.classname != "bot")
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Slip down a bit and you will see the second familiar problem:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	sprint (other, "You got the ");
+	sprint (other, self.netname);
+	sprint (other, "\n");
+// ammo touch sound
+	sound (other, CHAN_ITEM, "weapons/lock4.wav", 1, ATTN_NORM);
+	stuffcmd (other, "bf\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dammit, this is getting old. Oh well, we must press on. We also must change that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+if (other.classname == "player")
+	{
+	sprint (other, "You got the ");
+	sprint (other, self.netname);
+	sprint (other, "\n");
+	stuffcmd (other, "bf\n");
+	}
+
+// ammo touch sound
+	sound (other, CHAN_ITEM, "weapons/lock4.wav", 1, ATTN_NORM);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ah, that's much better. Okay, now we're onto the biggest change yet. When you pick up ammo, sometimes you switch to the best weapon you have if you ran out of ammo for it. This is problematic for us and our bot. Look at this stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if ( other.weapon == best )
+	{
+		stemp = self;
+		self = other;
+		self.weapon = W_BestWeapon();
+		W_SetCurrentAmmo ();
+		self = stemp;
+	}
+
+// if changed current ammo, update it
+	stemp = self;
+	self = other;
+	W_SetCurrentAmmo();
+	self = stemp;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, that is a bit weird. Basically the code is changing the "other" to the "self" in order to call W_SetCurrentAmmo(), since that routine refers to a "self." And of course, that's not going to work for our bot. So change *all* of that to *all* of this:<BR>
+ 
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+if (other.classname == "player")
+	{
+	if ( other.weapon == best )
+		{
+		stemp = self;
+		self = other;
+		self.weapon = W_BestWeapon();
+		W_SetCurrentAmmo ();
+		self = stemp;
+		}
+
+// if changed current ammo, update it
+	stemp = self;
+	self = other;
+	W_SetCurrentAmmo();
+	self = stemp;
+	}
+
+if (other.classname == "bot")
+	{
+	local float botbest;
+	botbest = bot_bestweapon();
+	if ( other.weapon == botbest )
+		{
+		stemp = self;
+		self = other;
+		self.weapon = bot_bestweapon();
+		bot_set_currentammo();
+		self = stemp;
+		}
+
+// if changed current ammo, update it
+	stemp = self;
+	self = other;
+	bot_set_currentammo();
+	self = stemp;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Damn this is ugly. Code is sometimes like that. First we put brackets around the player-only code to keep the bot out. Next we set up an area for the bot himself. Then we arm his best weapon and set his ammo to go along with it. Boring, huh?<BR>
+&nbsp;<P>&nbsp;<P><HR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, we have the longest and ugliest one left to do. That is the subroutine BackpackTouch(), near the bottom of ITEMS.QC. I hate to do what I'm about to do, but there are many stupid little changes that we've already discussed. So just go ahead and replace that <B>whole</B> routine with this corrected one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() BackpackTouch =
+{
+	local string	s;
+	local   float   best;
+	local		entity	stemp;
+	local float botbest;
+
+	if (other.classname != "player" && other.classname != "bot")
+		return;
+	if (other.health <= 0)
+		return;
+
+// if the player was using his best weapon, change up to the new one if better		
+	stemp = self;
+	self = other;
+	best = W_BestWeapon();
+	botbest = bot_bestweapon();
+	self = stemp;
+
+// change weapons
+	other.ammo_shells = other.ammo_shells + self.ammo_shells;
+	other.ammo_nails = other.ammo_nails + self.ammo_nails;
+	other.ammo_rockets = other.ammo_rockets + self.ammo_rockets;
+	other.ammo_cells = other.ammo_cells + self.ammo_cells;
+
+	other.items = other.items | self.items;
+	
+	bound_other_ammo ();
+
+// backpack touch sound
+                sound (other, CHAN_ITEM, "weapons/lock4.wav", 1, ATTN_NORM);
+
+        if (other.classname == "player")
+        {
+                sprint (other, "You get ");
+        
+                if (self.ammo_shells)
+                {
+                        s = ftos(self.ammo_shells);
+                        sprint (other, s);
+                        sprint (other, " shells  ");
+                }
+                if (self.ammo_nails)
+                {
+                        s = ftos(self.ammo_nails);
+                        sprint (other, s);
+                        sprint (other, " nails ");
+                }
+                if (self.ammo_rockets)
+                {
+                        s = ftos(self.ammo_rockets);
+                        sprint (other, s);
+                        sprint (other, " rockets  ");
+                }
+                if (self.ammo_cells)
+                {
+                        s = ftos(self.ammo_cells);
+                        sprint (other, s);
+                        sprint (other, " cells  ");
+                }
+	
+                sprint (other, "\n");
+                stuffcmd (other, "bf\n");
+
+// change to a better weapon if appropriate
+                if ( other.weapon == best )
+                {
+                        stemp = self;
+                        self = other;
+                        self.weapon = W_BestWeapon();
+                        self = stemp;
+                }
+                remove(self);
+	
+                self = other;
+                W_SetCurrentAmmo ();
+        }
+
+        if (other.classname == "bot")
+        {
+                if (other.weapon == botbest)
+                {
+                        stemp = self;
+                        self = other;
+                        self.weapon = bot_bestweapon();
+                        self = stemp;
+                }
+	
+                remove(self);
+	
+                self = other;
+                bot_set_currentammo();
+        }
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You know I don't usually like to just serve you up with the code like that, but these tutorials don't have to be mundane. I have faith that you will see that all we did was lock the bot out of the player code and gave him bot code of his own. This way he could switch to his own best weapon and his own ammo. That's the whole idea.<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We are finally done. What a relief. To recap, we edited health_touch(), armor_touch(), weapon_touch(), and BackpackTouch() so that the bot could be let in to each subroutine. Then we had to direct him away from the player code, perhaps giving him his own. If you look in other QuakeC files like DOORS.QC and BUTTONS.QC, you will see similar lock-out techniques that id wrote. Maybe now you can edit them and give your bot access to the whole Quake world.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. If you're not named "player", you are locked out of a lot of QuakeC routines<BR>
+2. That's because only players can take commands like sprint() and stuffcmd()<BR> 
+3. Also, the player has his own weapons code and animation<BR>
+4. Bots should not use any of the player-specific routines<P>
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

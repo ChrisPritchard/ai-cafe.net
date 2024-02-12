@@ -1,0 +1,103 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Target Leading</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lets be honest now. The tutor bot can't hit moving targets. This is simply a fact. I want it to be an opinion.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Think of it this way. You have a bot shooting straight at you, but if you strafe out of the way, he will simply miss. If you simply strafe constantly in one direction, he will <I>NEVER</I> hit you. This has to change.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you did this in a 'real' deathmatch, your opponent would counter this by shooting a little in front of you (lead you), so that by the time the shot reached you, you would be where the shot was directed. This bot doesn't do this. I'm going to make it do it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This tutorial is pretty short, so let's begin. Open up tutor.qc and scroll down to bot_aim_at_enemy(). It should look a little like this:<BR>
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+	return normalize(self.enemy.origin - self.origin);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now replace that WHOLE thing with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+	if (self.weapon == IT_SHOTGUN || self.weapon == IT_SUPER_SHOTGUN || self.weapon == IT_LIGHTNING)
+		return normalize((self.enemy.origin - self.enemy.velocity * 0.15) - self.origin);
+		else return bot_lead();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now there is a bit to understand in there. The routine decides whether the bot is firing a shotgun/lightning gun or a projectile weapon. If the bot has fired a shotgun/thunderbolt, it runs the next line. Simple, eh?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The second line is a bit complex, so I'll explain it in english. 'If the bot has just fired either shotgun or a lightning gun, then aim directly at the opponent but be a little innacurate. The faster the opponent is moving, the more innacurate it should be.'<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I stuck that bit in because I was annoyed at the way the bots always hit you with a shotgun, no matter how fast you moved.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If the bot has fired a projectile weapon, then it calls bot_lead, and returns that position instead.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The vector bot_lead() doesn't exist yet. Lets put it in now. Just above that routine, paste this one:
+	
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector () bot_lead =
+// -------------------------------------
+{
+local vector targ_loc, dir;
+local float move_fract, speedy;
+local entity targ;
+
+	targ = self.enemy;
+	speedy = 1000;
+	if (self.weapon == IT_GRENADE_LAUNCHER) speedy = 500;
+	move_fract = vlen(targ.origin - self.origin)*1.000 / (speedy - vlen(targ.velocity)*1.000);
+	targ_loc = targ.origin + targ.velocity * move_fract;
+	traceline (self.origin, targ_loc, TRUE, self);
+
+	if (trace_fraction == 1)
+	{
+		dir = targ_loc - self.origin;
+		dir = normalize(dir);
+		return dir;
+	}
+	else return targ.origin;
+};
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Don't even attempt to understand this code. I don't understand all of it, and I wrote the thing! It's just maths which tells the bot to aim a certain amount in front of the target. The amount is worked out based on the target's velocity, the distance between the bot and the target and the velocity of the projectile. But you don't need to know any of that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's it. Target leading is as simple as that to add. Now just compile, run and be shot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For a more complicated example of target leading, check out my ELFBOts in the <A HREF = "http://www.storm-1.freeserve.co.uk">STORM Quake Mod</A>, which lead perfectly with weapons firing at many different velocities.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Sometimes, you just have to do maths to get good AI<BR>
+2. You don't need to understand some code, just know how to use it<BR>
+3. Target leading is the ultimate way of improving a bot's combat AI<BR>
+4. Deathmatches are better if the bot is inaccurate with the shotguns<P>
+
+<CENTER><P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="MS Sans Serif"><FONT SIZE=+0>
+Author: SkinSki<BR>
+Questions: <A HREF="mailto:skinski@storm-1.freeserve.co.uk">skinski@storm-1.freeserve.co.uk<BR></A>
+AI chat on ICQ: 30578982</FONT></FONT><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center></P></CENTER>
+</BODY>
+</HTML>
+

@@ -1,0 +1,313 @@
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Win98 notepad">
+   <meta name="author" content="Nolan Irving">
+   <title>AI Tutorial</title>
+</head>
+<body text="#FFFFFF" bgcolor="#0080C0" link="#DFBFFF" vlink="#DFBFFF" alink="#DFBFFF">
+
+
+<hr SIZE=3 WIDTH=100% ALIGN=Center>
+<center><font face="Impact"><font size=+3>Environmental Damage</font></font></center>
+<hr SIZE=3 WIDTH=100% ALIGN=Center>
+
+<P><FONT FACE="MS Sans Serif" SIZE=3>Greetings, class. It's me, Rabies, back
+with yet another tutorial. Today, we're going to talk about hurting the player.
+Not just any kind of damage, though. We're going to give credit to the attacker
+for knocking people into lethal hazards.
+<P>Let's just start with the code, then I'll explain it more thoroughly at the
+end.<P>
+
+<FONT FACE="System" color=#DFBFFF>
+<PRE>
+   In COMBAT.QC
+   ==============
+   add the line "void () Walltouch;" at the beginning
+   Scroll down to the function T_Damage, go to the if statement following the "// figure momentum add" and replace
+   it with this:
+   if (inflictor != world)
+   {
+        dir = targ.origin - (inflictor.absmin + inflictor.absmax) * 0.5;
+        dir = normalize(dir);
+        targ.velocity = targ.velocity + dir*damage;
+        targ.flags = targ.flags - (targ.flags & FL_ONGROUND);
+        targ.touch = Walltouch;
+        targ.enemy = inflictor;
+   }
+
+</PRE>
+<P></FONT>Now we'll make the new file. For simplicity, I called it "Wall.qc".<P>
+<FONT FACE="System" color=#DFBFFF>
+<PRE>
+/* BEGIN FILE WALL.QC */
+
+// Function Prototypes
+void (entity targ, entity inflictor, entity attacker, float damage) T_Damage;
+void (vector org, vector vel, float damage) SpawnBlood;
+void (entity self, entity other) Demon_JumpTouch;
+void (entity self, entity other) Tar_JumpTouch;
+
+
+// minimum speed needed to take damage by slamming into a wall
+float MIN_DAMAGE_SPEED = 500;
+
+// divide victim speed by this number to calculate damage on impact
+float DAMAGE_DIVIDE = 100;
+
+// monsters take more damage from falls/slams than players
+float MONSTER_MULTIPLY = 3;
+
+
+void () Walltouch =
+{
+        local float dam;
+        local float d1, d2;
+
+        self.touch = SUB_Null;
+
+        // HACK: fix tarbaby and fiend
+        // when they hit (i.e. hit a player), do the normal walltouch
+        // that way you'll take normal damage and can't just shoot them
+        // when they're in midair.
+        if (self.classname == "monster_demon1")
+        {
+                Demon_JumpTouch();
+                self.nextthink = time + 0.1;  
+        }
+        if (self.classname == "monster_tarbaby")
+        {
+                Tar_JumpTouch();
+                self.nextthink = time + 0.1;
+        }
+
+        // if running into enemy, split damage and each takes half
+        if (other.takedamage)
+        {
+                dam = vlen(self.velocity) / DAMAGE_DIVIDE;
+                d1 = dam * 0.5;
+                if (self.classname != "player") d1 = floor(d1 * MONSTER_MULTIPLY);
+                if (d1 > 0) 
+                {
+                        T_Damage(self, self.enemy, self.enemy, d1);
+                        SpawnBlood(self.origin, '0 0 0', d1);
+                }
+                d2 = dam * self.weight * 0.5;
+                if (self.classname != "player") d2 = floor(d2 * MONSTER_MULTIPLY);
+                if (d2 > 0) 
+                {
+                        T_Damage(other, self.enemy, self.enemy, d2);
+                        SpawnBlood(other.origin, '0 0 0', d2);
+                }
+                return;
+        }
+
+        // if running into floor, damage based on z velocity
+        if (pointcontents(self.origin - '0 0 40') == CONTENT_SOLID)
+        {
+                if (self.velocity_z > MIN_DAMAGE_SPEED)
+                        dam = self.velocity_z / DAMAGE_DIVIDE;
+        }
+        else // ran into a wall
+                if (vlen(self.velocity) > MIN_DAMAGE_SPEED)
+                        dam = vlen(self.velocity) / DAMAGE_DIVIDE;
+
+        // monsters take more damage
+        if (self.classname != "player") dam = floor(dam * MONSTER_MULTIPLY);
+
+        // make zombies more killable
+        if ((self.classname == "monster_zombie") && (dam > 40)) dam = 70;
+
+        if (dam > 0)
+        {
+                T_Damage(self, e, e, dam);
+                SpawnBlood(self.origin, '0 0 0', dam);
+        }
+};
+
+/*
+   Code (c) Nolan Irving, 6/2/1999.
+   If you use it, give credit.
+   Distribute freely, but don't sell it.
+   Enjoy.
+*/
+
+/* END FILE WALL.QC */
+</PRE></FONT>
+Whew. That was a fair-sized chunk of code. So let's get down to the basics,
+shall we?<P>
+We'll look at the addition to Combat.qc first.
+<FONT FACE="System" color=#DFBFFF><PRE>
+   if (inflictor != world)
+   {
+        dir = targ.origin - (inflictor.absmin + inflictor.absmax) * 0.5;
+        dir = normalize(dir);
+        targ.velocity = targ.velocity + dir*damage;
+        targ.flags = targ.flags - (targ.flags & FL_ONGROUND);
+        targ.touch = Walltouch;
+        targ.enemy = inflictor;
+   }
+
+</PRE></FONT>
+This has just a few changes from the standard Id function. First off, we don't
+check to see if it is a player before doing the momentum add. After calculating
+the direction, we removed the onground flag from the target. What this does, as
+Coffee explained so elegantly in his fast-walking bot tutorial, is allow monsters
+to move like a player, using velocity code.<P>
+
+Next, the "targ.touch = Walltouch" bit. This function is so twisted it gets
+its own file.<BR>
+The last line sets the attacker as the target's enemy. This is normally done for
+monsters but not for players. This is VERY important - when taking damage from
+WallTouch, self.enemy is listed as the attacker. This tells the system that
+the enemy, not the world, is doing damage and should get credit for any frags.
+<P>
+Ok, so here we are at the beginning of wall.qc.<BR>
+First, we add prototypes of the functions we'll be calling from this file.
+<FONT FACE="System" color=#DFBFFF><PRE>
+void (entity targ, entity inflictor, entity attacker, float damage) T_Damage;
+void (vector org, vector vel, float damage) SpawnBlood;
+void (entity self, entity other) Demon_JumpTouch;
+void (entity self, entity other) Tar_JumpTouch;
+</PRE></FONT>
+
+Now a few constants you can play around with.
+<FONT FACE="System" color=#DFBFFF><PRE>
+// minimum speed needed to take damage by slamming into a wall
+float MIN_DAMAGE_SPEED = 500;
+
+// divide victim speed by this number to calculate damage on impact
+float DAMAGE_DIVIDE = 100;
+
+// monsters take more damage from falls/slams than players
+float MONSTER_MULTIPLY = 3;
+</PRE></FONT>
+Simple thus far.<P>
+<FONT FACE="System" color=#DFBFFF><PRE>
+void () Walltouch =
+{
+        local float dam;
+        local float d1, d2;
+
+</PRE></FONT>
+Reset the creature's touch function and enemy.<BR>
+We put this in to make them stop taking damage from hitting walls. The placement
+here is very important - before the damage is done.  Thus, if they hit hard
+enough to injure themselves, they can ricochet and take damage each time.<BR>
+It took me a while to realize this benefit, actually. Before, I had it resetting
+the touch function after applying the damage.
+<FONT FACE="System" color=#DFBFFF><PRE>
+        self.touch = SUB_Null;
+
+</PRE></FONT>
+Now, a few ugly hacks.<BR>
+The fiend and demon change their touch function to one that does damage
+when they jump. If you shot them while they were in the air, that function
+would be changed and they would do little damage when hitting something.  So,
+we call the normal touch function anyway.
+<FONT FACE="System" color=#DFBFFF><PRE>
+        // HACK: fix tarbaby and fiend
+        // when they hit (i.e. hit a player), do the normal walltouch
+        // that way you'll take normal damage and can't just shoot them
+        // when they're in midair.
+        if (self.classname == "monster_demon1")
+        {
+                Demon_JumpTouch();
+                self.nextthink = time + 0.1;  
+        }
+        if (self.classname == "monster_tarbaby")
+        {
+                Tar_JumpTouch();
+                self.nextthink = time + 0.1;
+        }
+
+</FONT></PRE>
+This part is also ugly.<BR>
+Just a lot of garbage to split damage evenly when a player/monster hits another
+player/monster. Some of it is left over from my mod I stole this code from. I
+had added weights for each monster, and heavier creatures took more damage but
+were knocked back less.
+<FONT FACE="System" color=#DFBFFF><PRE>
+        // if running into enemy, split damage and each takes half
+        if (other.takedamage)
+        {
+                dam = vlen(self.velocity) / DAMAGE_DIVIDE;
+                d1 = dam * 0.5;
+                if (self.classname != "player") d1 = floor(d1 * MONSTER_MULTIPLY);
+                if (d1 > 0) 
+                {
+                        T_Damage(self, self.enemy, self.enemy, d1);
+                        SpawnBlood(self.origin, '0 0 0', d1);
+                }
+                d2 = dam * self.weight * 0.5;
+                if (self.classname != "player") d2 = floor(d2 * MONSTER_MULTIPLY);
+                if (d2 > 0) 
+                {
+                        T_Damage(other, self.enemy, self.enemy, d2);
+                        SpawnBlood(other.origin, '0 0 0', d2);
+                }
+                return;
+        }
+
+</FONT></PRE>
+This is the important bit.
+If we're here, then the entity ran into the world. We check beneath their feet...
+if it's solid, they hit the floor and damage is based only on the Z component
+of their velocity. Otherwise, they hit a wall or ceiling and take damage based
+on the full velocity.
+<FONT FACE="System" color=#DFBFFF><PRE>
+        // if running into floor, damage based on z velocity
+        if (pointcontents(self.origin - '0 0 40') == CONTENT_SOLID)
+        {
+                if (self.velocity_z > MIN_DAMAGE_SPEED)
+                        dam = self.velocity_z / DAMAGE_DIVIDE;
+        }
+        else // ran into a wall
+                if (vlen(self.velocity) > MIN_DAMAGE_SPEED)
+                        dam = vlen(self.velocity) / DAMAGE_DIVIDE;
+
+</FONT></PRE>
+Miscellaneous fun. Monsters take more damage, so multiply the calculated
+value. We also make zombies easier to kill by bumping the damage up a bit.
+<FONT FACE="System" color=#DFBFFF><PRE>
+        // monsters take more damage
+        if (self.classname != "player") dam = floor(dam * MONSTER_MULTIPLY);
+
+        // make zombies more killable
+        if ((self.classname == "monster_zombie") && (dam > 40)) dam = 70;
+
+</FONT></PRE>
+We're finally finished! If the calculated damage is positive, inflict it and
+do a blood splatter. Note that, as mentioned above, this allows creatures to
+take damage from multiple impacts.
+<FONT FACE="System" color=#DFBFFF><PRE>
+        if (dam > 0)
+        {
+                T_Damage(self, self.enemy, self.enemy, dam);
+                SpawnBlood(self.origin, '0 0 0', dam);
+        }
+};
+</FONT></PRE>
+<P>
+Since it's 10 minutes shy of 3 AM, I'm going to wrap this up quickly. Hopefully
+you learned something from this code, though admittedly there isn't too much
+you do to adapt it to other purposes.<P>
+
+&nbsp;<P><HR align=center SIZE=3 width="100%"><P>
+
+<CENTER><H3>What We Learned</H3></CENTER>
+1. You can do cool stuff by changing a creature's touch function<BR>
+2. Trace through your code when writing it to find nonobvious benefits or bugs.<BR>
+3. Always finish writing tutorials before 1 am.<P>
+
+<CENTER>
+<HR align=center SIZE=3 width="100%">
+Author: Rabies<BR>
+Questions: <A href="mailto:nirving@umr.edu">nirving@umr.edu</A><BR>
+ICQ: 10345116<BR>
+</CENTER></FONT>
+<HR align=center SIZE=3 width="100%">
+
+</body>
+</html>
+
+

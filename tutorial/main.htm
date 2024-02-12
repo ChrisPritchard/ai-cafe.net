@@ -1,0 +1,617 @@
+
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>A I &nbsp; C a f e</TITLE>
+</HEAD>
+
+<BODY LEFTMARGIN=0 TOPMARGIN=0 MARGINWIDTH=0 MARGINHEIGHT=0 BGCOLOR="white" TEXT="WHITE" LINK="blue" ALINK="purple" VLINK="purple" >
+
+
+<TABLE width=100% CELLSPACING=0 CELLPADDING=20>
+
+	<!-- LINKS COLUMN -->
+	<TR VALIGN=TOP >
+	<TD ALIGN=RIGHT BGCOLOR="46008C">
+
+<FONT size=+1 face="Verdana" color="black">
+<CENTER>
+
+	<IMAGE SRC="..\logo.gif" ALT="Cafe logo" BORDER=0>
+	<P>&nbsp;<P>&nbsp;<P>&nbsp;<P>&nbsp;<P>&nbsp;<P>&nbsp;<P>&nbsp;<P>
+
+</CENTER>
+</FONT>
+
+	<!-- NEWS COLUMN -->
+	<TD>
+
+<FONT size=2 face="Verdana" color="black">
+
+
+
+	<P>&nbsp;<P>&nbsp;<P>&nbsp;<P>
+	<CENTER><IMG SRC="../words.jpg" ALT="Cafe art"></CENTER><P>
+	<P>&nbsp;<P>&nbsp;<P>&nbsp;<P>
+
+	<FONT SIZE=3>
+	<CENTER>
+	<a href="../home.htm">Home</A> | Tutorials |
+	<a href="../tutor.htm">Tutor Bot</A> |
+	<A HREF="http://minion.planetquake.gamespy.com/ubb/Ultimate.cgi">Message Board</A> |<BR>
+	<a href="../links.htm">Links</A> | <a href="../edit.htm">Editorials</A> |
+	<a href="../news.htm">Archives</A> | <a href="../sky.htm">SkyBlazer</A> | <BR>
+	<a href="../m_arena.htm">Minion</A> | <a href="../m_arena.htm">Minion Arena</A> |
+	<A HREF="mailto:coffee@planetquake.com">Email</A>
+	</CENTER>
+	</FONT>
+	<P>&nbsp;<P>
+
+	<TABLE WIDTH=100% BORDER=0 CELLSPACING=10 CELLPADDING=10 >
+	<TR VALIGN=CENTER>
+		<TD BGCOLOR="#8A00A8">Artificial Intelligence Tutorials</TD>
+		<TD WIDTH=20% ALIGN=RIGHT VALIGN=CENTER BGCOLOR="A84EF1">&nbsp;</TD>
+	</TR></TABLE><P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Quake is old.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But for a long while now, you've had an idea. You've wanted to modify the monsters somehow. Or you wanted to add bots to a deathmatch mod you play on the net.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You might have been afraid of learning QuakeC because you've never programmed before. Maybe you've tried, but you couldn't translate your idea into code.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That will now change. Welcome to my series of artifical intelligence tutorials. Whether you don't know much QuakeC, or whether you have started your own bot, you'll learn how to program AI.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This ongoing series will be delivered in four phases:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Learning the Basics<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Making a Monster Bot<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Building a Deathmatch Bot<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. Creating a Bot Game<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I have two goals with this series. One, I want total conversion programmers to learn how to build more interesting creatures. Two, I want others to add bots to deathmatch games that are normally played over the net.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These lessons will also be shaped by you. If you want to see a certain tutorial, or if you have source code for a cool patch that could use AI, let me know and I'll do it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It is strongly recommended that you read the QuakeC manual, look over the QuakeC source code, and do the tutorials at <A HREF="http://www.inside3d.com/">Inside3D</A> before you start on the AI lessons.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One thing you should know: we're not here to make the smartest bots. That would be boring. We're here to create cool enemies. We're here to have fun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, now it's time for some monster brain surgery.<P>
+&nbsp;<P>
+
+
+<A HREF="links.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Looking For Links</FONT>
+</A><BR>
+Here are links to other AI-related sites<P>
+
+<A HREF="source.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Examining Some Source Code</FONT>
+</A><BR>
+Sample QuakeC to study and use<P>
+
+<A HREF="tutor1.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Learning AI terminology</FONT>
+</A><BR>
+The first lesson defines the basic artificial intelligence ideas<P>
+
+<A HREF="rand_wep.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Random Weapon Feature</FONT>
+</A><BR>
+This will randomize the guns each time you load a map<P>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center NOSHADE>
+
+<A HREF="tutor2.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Improving the Monsters</FONT>
+</A><BR>
+Simple ways to make the creatures better<P>
+
+<A HREF="tutor3.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Understanding Monster Animation</FONT>
+</A><BR>
+How to make an enforcer duck<P>
+
+<A HREF="tutor4.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Adding Night Mode</FONT>
+</A><BR>
+Beasts and bots that go bump in the night<P>
+
+<A HREF="tutor5.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Strafing Like A Player</FONT>
+</A><BR>
+An enforcer learns how to kick ass<P>
+
+<A HREF="tutor7.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Creating Your First QuakeC Mod</FONT>
+</A><BR>
+This is for first-timers<P>
+
+<A HREF="tutor8.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Getting Your Own Pet Demon</FONT>
+</A><BR>
+How to make a helper monster<P>
+
+<A HREF="tutor9.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Spawning a Monster Bot</FONT>
+</A><BR>
+Creating a monster out of thin air<P>
+
+<A HREF="tutor10.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Sneaking Past Monsters</FONT>
+</A><BR>
+Creeping right past those dumb creatures<P>
+
+<A HREF="tutor6.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Firing Custom Weapons</FONT>
+</A><BR>
+Make the monsters use new guns<P>
+
+<A HREF="tutor11.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Roaming the Level</FONT>
+</A><BR>
+Creatures that explore and pick up items<P>
+
+<A HREF="fastmons.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Fast Monsters</FONT>
+</A><BR>
+Make monsters chase and strafe quickly like bots<P>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center NOSHADE>
+
+<A HREF="tutor12.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Crouching</FONT>
+</A><BR>
+Now the Tutor Bot will duck<P>
+
+<A HREF="tutor13.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Faster Thinking</FONT>
+</A><BR>
+The Bot will think and run faster<P>
+
+<A HREF="tutor14.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bot Fundamentals</FONT>
+</A><BR>
+How the Tutor Bot works. An important lesson<P>
+
+<A HREF="tutor15.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Faster Running</FONT>
+</A><BR>
+The Bot will walk and run much quicker<P>
+
+<A HREF="predator.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Predator Deathmatch Mode</FONT>
+</A><BR>
+A suspenseful new way to frag<P>
+
+<A HREF="waypoint.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Waypoint Navigation</FONT>
+</A><BR>
+Make your bot roam any level perfectly<P>
+
+<A HREF="fight.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+New Fighting Styles</FONT>
+</A><BR>
+The bot will attack in various exciting styles<P>
+
+<A HREF="items.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bot Items</FONT>
+</A><BR>
+Bot will pick up various items for real<P>
+
+<A HREF="backpack.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Exploding Backpack</FONT>
+</A><BR>
+He will now throw killer trick packs<P>
+
+<A HREF="playdead.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Play Dead</FONT>
+</A><BR>
+Our guy will now fall down and fake death<P>
+
+<A HREF="last_man.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Last Man Standing</FONT>
+</A><BR>
+You and your bot can play a new deathmatch game<P>
+
+<A HREF="coffee.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Better Navigation</FONT>
+</A><BR>
+Understanding and improving coffee_move()<P>
+
+<A HREF="choice.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Weapon Preferences</FONT>
+</A><BR>
+Your bot will choose a preferred gun<P>
+
+<A HREF="coop.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Co-Op Support</FONT>
+</A><BR>
+Make your bot shoot monsters and such<P>
+
+<A HREF="squad.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bomb Squad</FONT>
+</A><BR>
+Fight mad bombers in this new game mode<P>
+
+<A HREF="botcam.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bot Camera</FONT>
+</A><BR>
+See what a bot sees<P>
+
+<A HREF="ranking.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bots on Scoreboard</FONT>
+</A><BR>
+Your guy will now show up in the frag rankings<P>
+
+<A HREF="names.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Better Naming System</FONT>
+</A><BR>
+So you won't have ten bots named BG<P>
+
+<A HREF="talking.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Talking</FONT>
+</A><BR>
+Hear what your bot thinks about the world<P>
+
+<A HREF="paintbal.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+PaintBall</FONT>
+</A><BR>
+Splatter paint all over your enemies to earn frags<P>
+
+<A HREF="jump.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Better Jumping</FONT>
+</A><BR>
+Improve the bot's questionable jumping AI<P>
+
+<A HREF="grabbing.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Improved Item Grabbing</FONT>
+</A><BR>
+An easier way for him to get items<P>
+
+<A HREF="home1.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 1</FONT>
+</A><BR>
+A fun way to test your knowledge<P>
+
+<A HREF="home1a.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 1 Answer</FONT>
+</A><BR>
+See if you're as smart as you think you are<P>
+
+<A HREF="home2.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 2</FONT>
+</A><BR>
+Yeah, but can you do this one?<P>
+
+<A HREF="home2a.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 2 Answer</FONT>
+</A><BR>
+I wonder if you got it right<P>
+
+<A HREF="home3.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 3</FONT>
+</A><BR>
+Okay, now try this<P>
+
+<A HREF="home3a.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 3 Answer</FONT>
+</A><BR>
+The answer you've been waiting for<P>
+
+<A HREF="home4.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 4</FONT>
+</A><BR>
+Do this and you rule<P>
+
+<A HREF="home4a.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Homework Assignment No. 4 Answer</FONT>
+</A><BR>
+You hope this is the last one, right?<P>
+
+
+<A HREF="lead_one.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Target Leading</FONT>
+</A><BR>
+The bot will aim ahead of you now<P>
+
+<A HREF="errors.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Common Errors</FONT>
+</A><BR>
+Errors that bot authors run into<P>
+
+<A HREF="cover.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Run for Cover</FONT>
+</A><BR>
+Your bot will hide during combat<P>
+
+<A HREF="select.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Improved Weapon Selection</FONT>
+</A><BR>
+I hope that is self-explantory<P>
+
+<A HREF="corpse.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Gibbable Corpses</FONT>
+</A><BR>
+Blast those bot bodies into chunks<P>
+
+<A HREF="r_arena.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Rocket Arena Support</FONT>
+</A><BR>
+Your bot will play this world-famous deathmatch mod<P>
+
+<A HREF="thumping.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Thumping Removal</FONT>
+</A><BR>
+Every bot has to deal with this annoying issue<P>
+
+<A HREF="aim.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Adjusting Aim</FONT>
+</A><BR>
+Your bot will try to shoot around obstacles<P>
+
+<A HREF="speed.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Speed</FONT>
+</A><BR>
+A powerful and adjustable bot velocity system<P>
+
+<A HREF="secret.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Opening Secret Doors</FONT>
+</A><BR>
+SkinSki teaches the bot how to get these pesky things open<P>
+
+<A HREF="flee.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Fleeing</FONT>
+</A><BR>
+Your bot will now be smart enough to flee when injured<P>
+
+<A HREF="alt_nav.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Alternate Navigation</FONT>
+</A><BR>
+A different way for your little guy to roam the level<P>
+
+<A HREF="circle.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Circle Strafing</FONT>
+</A><BR>
+Now he'll strafe like a professional player<P>
+
+<A HREF="farting.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Farting</FONT>
+</A><BR>
+Discover that your bot really stinks<P>
+
+<A HREF="classes.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bot Classes</FONT>
+</A><BR>
+Develop bots like cyborgs, thieves, assassins, whatever<P>
+
+<A HREF="camping.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Camping</FONT>
+</A><BR>
+Add flair to your bot by making him camp near items<P>
+
+<A HREF="rockjump.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Rocket jumping</FONT>
+</A><BR>
+Make your bot do that thing the hardcore players do<P>
+
+<A HREF="aggress.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Aggressive Bots</FONT>
+</A><BR>
+The bot will attack more quickly and move a little more<P>
+
+<A HREF="platform.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Riding Platforms</FONT>
+</A><BR>
+Now out little friend will ride up elevators<P>
+
+<A HREF="grenade.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Improved Grenade Aiming</FONT>
+</A><BR>
+He won't lob them over your head anymore<P>
+
+<A HREF="lead_two.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Alternate Target Leading</FONT>
+</A><BR>
+Your bot will shoot ahead of his enemy perfectly<P>
+
+<A HREF="goodjump.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Better Jumping For Sure!</FONT>
+</A><BR>
+A good solution to one of the hardest QuakeC problems<P>
+
+<A HREF="fuzzy.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Fuzzy Logic</FONT>
+</A><BR>
+We reduce this real academic AI concept to ruins<P>
+
+<A HREF="bet_talk.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Better Talking</FONT>
+</A><BR>
+Bots learn how to make their insults more personal<P>
+
+<A HREF="dropback.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Dropping Backpacks</FONT>
+</A><BR>
+How to fix the Tutor Bot backpack "bug"<P>
+
+<A HREF="language.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bot Language</FONT>
+</A><BR>
+Said bot will form simple sentences<P>
+
+<A HREF="strafing.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Strafing Into Items During Battle</FONT>
+</A><BR>
+A very Reaper-like, very cool lesson which you cannot pass over<P>
+
+<A HREF="state.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Fuzzy State Machines</FONT>
+</A><BR>
+Applying another academic AI concept to our little deathmatch guy<P>
+
+<A HREF="radio.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Radioactive Mode</FONT>
+</A><BR>
+A new deathmatch mode with a spiffy particle effect<P>
+
+<A HREF="fraglim.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Bot Fraglimits</FONT>
+</A><BR>
+This allows your bot to win games through console variables<P>
+
+<A HREF="chasing.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Chasing Enemies</FONT>
+</A><BR>
+Bot will pursue foes through teleporters and around corners<P>
+
+<A HREF="locdam.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Locational Damage</FONT>
+</A><BR>
+Pull off head shots, leg shots, and chest shots<P>
+
+<A HREF="stairs.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Descending Stairs</FONT>
+</A><BR>
+Your little friend will no longer leap down stairs cluelessly<P>
+
+<A HREF="real_aim.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Realistic Aiming</FONT>
+</A><BR>
+Your bot will learn to aim imperfectly, like a player<P>
+
+<A HREF="swimming.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Improved Swimming</FONT>
+</A><BR>
+Do this lesson if you're bot is sick of drowning<P>
+
+<A HREF="converse.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Conversation</FONT>
+</A><BR>
+Ask your bots questions and they will answer<P>
+
+<A HREF="drop_wep.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Dropping Weapons</FONT>
+</A><BR>
+Players and bots can drop weapons for teammates to pick up<P>
+
+<A HREF="lava_bug.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+No Jumping Into Lava</FONT>
+</A><BR>
+A good fix to the common "lava bug" jumping problem<P>
+
+<A HREF="tourna.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Tournament Mode</FONT>
+</A><BR>
+Give your mod a bot ladder deathmatch mode<P>
+
+<A HREF="alt_circ.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Alternate Circle Strafing</FONT>
+</A><BR>
+Everybody wants to do this, including your bot<P>
+
+<A HREF="walkmove.htm">
+<FONT FACE="MS Sans Serif" SIZE=2>
+Walkmove Navigation</FONT>
+</A><BR>
+Not perfect, but another method to learn from and improve on<P>
+
+<P>&nbsp;<P>
+
+</FONT>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE width=100% CELLSPACING=0 CELLPADDING=20>
+<TR VALIGN=TOP >
+<TD ALIGN=RIGHT BGCOLOR="46008C">
+
+	<CENTER>
+	<a href="http://ads.criticalmass.com/cgi-bin/adjuggler.exe?img_click=/PQ/minion/index.html" target="_top">
+	<img src="http://ads.criticalmass.com/cgi-bin/adjuggler.exe?img_only=/PQ/minion/index.html" border=0 alt="Click for more information!" width=468 height=60></a><P>
+	</CENTER>
+
+
+</TD></TR></TABLE>
+
+</BODY>
+</HTML>
+

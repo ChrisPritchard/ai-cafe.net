@@ -1,0 +1,130 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Predator Deathmatch Mode</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm excited.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm excited because these tutorials are getting really cool. This time we're going to add a new deathmatch mode to the Tutor Bot, which I call Predator Mode. You can rename it, if you like<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this mode, everyone is invisible. Well, more specifically, you and the bots play as eyeballs, which are quite hard to see and more than a little spooky.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You really have to creep around slowly, keeping your, eh, eyes open, making sure those bots don't prey on you before you prey on them. That's Predator Mode.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This lesson is very simple. All we'll be doing is setting everyone's model to the eyes, and then making the bot's aiming a little worse, since he won't see you as well.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, scroll down to respawn_bot() until you see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// making him normal again
+	setmodel(self, "progs/player.mdl");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then, replace that little bit with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// making him normal again
+	if (cvar("deathmatch") == 3)
+		setmodel(self, "progs/eyes.mdl");
+		else setmodel(self, "progs/player.mdl");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, go down a bit further to create_bot(), where this will appear:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// defining his animation
+	setmodel(bot, "progs/player.mdl");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Just like before, we'll replace that bit with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// defining his animation
+	if (cvar("deathmatch") == 3)
+		setmodel(bot, "progs/eyes.mdl");
+		else setmodel(bot, "progs/player.mdl");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, very simple stuff. Now, if you bring the Quake console down, type "deathmatch 3" and then restart, the bot will appear as those cute and creepy eyeballs.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Since you'll have a harder time hitting him, we'll make it harder for him to hit you. Scroll up to bot_aim_at_enemy() and replace it with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+local float chance;
+
+	if (cvar("deathmatch") == 3)
+		chance = floor(random() * 10);
+		else chance = floor(random() * 4);
+
+	if (chance < 2)
+		return normalize(self.enemy.origin - self.origin);
+	else if (chance == 2)
+		return normalize((self.enemy.origin - '50 0 0') - self.origin);
+	else if (chance == 9)
+		return normalize((self.enemy.origin - '75 0 0') - self.origin);
+	else
+		return normalize((self.enemy.origin + '50 0 0') - self.origin);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now, in Predator Mode, he only has a two in ten chance of aiming perfectly, and sometime he will shoot *way off* to your side.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can save that now. We're done with tutor.qc. We have two more changes to make, both in client.qc, where the player is spawned.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scroll down to the subroutine PutClientInServer(). Look for the line that says "setmodel (self, "progs/player.mdl");" As you can guess, you'll replace that line with these:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 3)
+		setmodel(self, "progs/eyes.mdl");
+		else setmodel(self, "progs/player.mdl");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Good work. We only have one change left. Find the subroutine called PlayerPostThink(). At the very end of that, we'll paste this in:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time < 5 && cvar("deathmatch") == 3)
+		centerprint(self, "Now playing Predator Mode\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Basically, this is similar to a "message of the day." If you have deathmatch set to three, this message will be printed on your screen for the first five seconds of the game. Kewl, huh?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Can you guess what time it is? Yup, it's "save-and-compile time." Now you have a new deathmatch mode. Damn, that was easy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Keep your eyes peeled.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Deathmatch is cool; custom rules are better<BR>
+2. The bot can be adapted to new styles of play<BR> 
+3. A few lines of code can make a whole new game<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

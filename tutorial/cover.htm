@@ -1,0 +1,122 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Run for Cover</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today, I'm not gonna be shy, and I'm not gonna be ambiguous: I got a damn good tutorial for you. In fact, it's probably the third of my greatest hits, behind coffee_move() and the hybrid velocity code.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your bot will soon learn how to run for cover. I don't care what you've read, no other bot does this. He will actually back up to find a wall or column and hide behind it. This is not a script, and it's not a hack. It works.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On top of that, like most of my best code, it's short and simple. It comes in just one subroutine. We want to put it before the one called bot_strafe(). So, find that now and paste this before it:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------------------------
+void() run_for_cover =
+// -------------------------------------------------------
+{
+
+	if (!visible(self.enemy) && random() < 0.9)
+		return;
+
+	if (time > self.attack_finished && self.enemy.health > 0)
+		self.th_missile();
+
+	bot_face();
+
+	if (self.lefty == 0)
+		if (walkmove (self.angles_y - 180, 20) == TRUE)
+			return;
+
+	self.lefty = 0;
+
+	if (walkmove (self.angles_y + self.button1, 20))
+		return;
+		
+	self.lefty = 1;
+
+	if (walkmove (self.angles_y, 20) == TRUE)
+		return;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Heehee. I love this stuff. Okay, the first part says this: if I cannot see my enemy, then he cannot see me, so if I feel like it, I'll stay hidden. The second part: if I'm ready to attack and my enemy is still alive, I'll shoot. Next: I'll face my enemy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, the stuff after that is a bit more complicated. Basically it is a combination of bot_run_slide(), which moves him back and forth, and coffee_move(), which makes him turn corners.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;He will move backwards until he hits a wall. Then he will strafe along that wall until he hits a corner. He will then start walking along that new wall.<BR> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That stuff is nothing. The trick is that as he retreats and strafes left or right, he will eventually leave the enemy's view. Thus, he knows he cannot see his enemy, and vice versa. And that's the cover part.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm sure right now that the teeth inside your hungry brain are trying to wrap themselves around that concept and bite into it. Just remember, it really is pretty darn simple. Let's say you're in a battle, and you start to back up. You hit a wall behind you, so you begin to sidestep. If you're enemy is not moving much, you are eventually going to lose him. At that point, you can decide to wait and shoot at him when he comes around again.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now, we merely have to tell the bot to use this technique. Here is where you can use your judgment. You can tell him to use it whenever you think is best. Say, for example, your bot will only run for cover when his enemy has a rocket launcher. If you wanted to do this, you would find bot_strafe(), which looks like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() bot_strafe =
+// ----------------------
+{
+// this routine is called every frame during combat, 
+// so he strafes and dodges even while shooting
+
+
+	bot_check_ammo();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, we would add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.enemy.weapon == IT_ROCKET_LAUNCHER)
+		{
+		run_for_cover();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here he would just run for cover and leave the subroutine. A couple notes about run_for_cover(). One, there is a byproduct that I've never been able to change. After the bot hits a corner, if he is still visible, he will run along that wall, toward the enemy. I don't consider this a bug, because it just happens as a result of cornering.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Two, you have to pay attention to how and when you use run_for_cover(). For instance, the next few lines in bot_strafe() are as follows:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (!visible(self.enemy))
+		{
+		movetogoal(20);
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here, if he cannot see his enemy, he will try to chase him. For obvious reasons, you could not execute something like this and run_for_cover(), because there, if he is not visible, he tries to stay that way.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I can honestly say that run_for_cover() is an incredibly powerful and versatile subroutine. All kind of things can happen with it. For example, your bot may retreat and pop up somewhere else for a better shot at you (try that on one of the Fragtown deathmatch map series). In addition, you could add to it in groovy ways. For instance, the bot may not shoot at his enemy at first. He may hide behins a wall. Then, as his enemy comes around, he could switch to his rocket launcher and blow him away.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, it's yours now. Take care of it, and it'll take care of you.
+<P>&nbsp;<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. walkmove() is handy during battle<BR>
+2. id's ai_run_slide() routine is worth something<BR>
+3. if you never experiment with AI, you'll never learn anything new<P>
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

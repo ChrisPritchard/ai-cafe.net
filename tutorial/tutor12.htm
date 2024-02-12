@@ -1,0 +1,153 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Adding the Duck Feature</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here we go with the first lesson for the long-awaited Tutor Bot. Take a deep breath.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, you can let it out now. We're just going to be adding the duck feature to the beloved bot. The method is a little messy, but it's the easiest. Naturally, you'll have to open the tutor.qc file. If you didn't know that, you need slapped with a large salmon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Near the top you'll find this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// declaring the routines before they are called
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We need to declare the duck animation before it's called, so right after that line we'll add this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() bot_duck1;
+</FONT>
+</PRE>
+&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hunky dorey. Now we will actually call the duck routine. We want the bot to crouch down every once in a while when his enemy is attacking. He should only do this when he's a good distance away, though. It'll look better.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So scroll down towards the middle until you behold this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() bot_strafe =
+// ----------------------
+{
+// this routine is called every frame during combat, 
+// so he strafes and dodges even while shooting
+
+
+	bot_check_ammo();
+
+	if (!visible(self.enemy))
+		{
+		movetogoal(20);
+		return;
+		}
+
+	bot_face();
+</FONT>
+</PRE>
+&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boy, who wrote that beautiful code? Anyway, add the following code right after that:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time < self.enemy.attack_finished && random() < 0.1 && vlen(self.origin - self.enemy.origin) > 200)
+		{
+		bot_duck1();
+		return;
+		}
+</FONT>
+</PRE>
+&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, believe it or not, this is as simple as it looks. When the time is right, he will call his ducking animation. Which, by the way, looks pretty darn cool.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Our work is not done as of yet, though. After all, we do need the animation, right?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Go down further until you see this stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_light4	=[	$light2,	bot_light5	] {bot_strafe(); bot_lightning();};
+void()  bot_light5	=[	$light1,	bot_light6	] {bot_strafe(); bot_lightning();};
+void()  bot_light6	=[	$light2,	bot_run1	] {bot_strafe(); bot_lightning(); if (visible(self.enemy) && self.ammo_cells > 0 && self.enemy.health > 0) bot_light1(); else bot_run1(); };
+</FONT>
+</PRE>
+&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This of course is the animation to his lightning gun attack. We will put this ducking sequence right under it:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_duck1		=[	$deathd3,	bot_duck2	] {self.solid = SOLID_NOT; bot_face();};
+void()  bot_duck2		=[	$deathd4,	bot_duck3	] {};
+void()  bot_duck3		=[	$deathd5,	bot_duck4	] {bot_face();};
+void()  bot_duck4		=[	$deathd6,	bot_duck5	] {};
+void()  bot_duck5		=[	$deathd6,	bot_duck6	] {bot_face();};
+void()  bot_duck6		=[	$deathd6,	bot_duck7	] {};
+void()  bot_duck7		=[	$deathd6,	bot_duck8	] {bot_face();};
+void()  bot_duck8		=[	$deathd6,	bot_duck9	] {};
+void()  bot_duck9		=[	$deathd6,	bot_run1	] {self.solid = SOLID_SLIDEBOX; };
+</FONT>
+</PRE>
+&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Have you noticed the messy part, yet? It's that part about the SOLID_NOT.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, the simplest way to make it look like nails and rockets are flying over the bot is to make them fly right through him. Yep, that's right, we're cheating.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Because we are cheating, we need to add one more little thing. Unfortunately, sometimes the bot stays SOLID_NOT. We need to scroll down to the bot_attack() subroutine. At the end you'll see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	else if (self.weapon == IT_LIGHTNING)
+		{
+		self.attack_finished = time + 0.1;
+		bot_light1();
+		}
+</FONT>
+</PRE>
+&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right after that, we will paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// this is an ugly hack for the ducking feature
+	self.solid = SOLID_SLIDEBOX;
+</FONT>
+</PRE>
+&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will make his body solid again. Oh, you dirty hacker, you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Er, well, I think that's about it. The enemy attacks, he gets down, the missiles pass through him, and he gets back up. Ain't life grand?<P>
+
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Did we really learn anything?<BR>
+2. Projectiles will pass through non-solid entities<BR> 
+3. We can reorganize the player animation frames into new sequences<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

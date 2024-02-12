@@ -1,0 +1,143 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Adding Night Mode</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will be a short, easy, and fun lesson. I will show you how to add a night mode for fighting monsters or bots in the dark.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can use the QuakeC source if you want to battle creatures at night. But if you like bots, just download the code for the <A HREF="ftp://ftp.cdrom.com/pub/idgames2/quakec/bots/bgbot16.zip">BGBots</A>. It will work for them, too.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First step: open up the MISC.QC file. Okay, first I will give you the code which you will be adding:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("temp1") == 1)
+		{
+		lightstyle(self.style, "a");
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This code says if the console variable "temp1" is set to one, then the light style will be "a", which means none.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, copy that code. You will be adding that to eight subroutines. I don't want to list the entire routine here. Just look for these lines and paste the above code after each bracket:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() light =
+{
+
+void() light_fluoro =
+{
+
+void() light_fluorospark =
+{
+
+void() light_globe =
+{
+
+void() light_torch_small_walltorch =
+{
+
+void() light_flame_large_yellow =
+{
+
+void() light_flame_small_yellow =
+{
+
+void() light_flame_small_white =
+{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remember, we want our new code to come after the braket and before any of id's code. We want to turn off each light when the map loads.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now the second step. Open up CLIENT.QC and scroll down to the PutClientInServer() routine, which begins like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+===========
+PutClientInServer
+
+called each time a player is spawned
+============
+*/
+void() DecodeLevelParms;
+void() PlayerDie;
+
+
+void() PutClientInServer =
+{
+	local	entity spot;
+
+	spot = SelectSpawnPoint ();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;At the *end* of that routine, before the bracket and semi-colon, add the following code:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("temp1") == 1)
+		self.effects = EF_DIMLIGHT;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PutClientInServer() is where the player is "born." So, this code will make him glow in the dark. Now, open up MONSTERS.QC and slide down to this stuff:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+//============================================================================
+
+void() walkmonster_start_go =
+{
+local string	stemp;
+local entity	etemp;
+
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After this, paste in the same code. You also want to paste it into the subroutines flymonster_start_go() and swimmonster_start_go(). Now the monsters will glow in the dark.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last step. If you are starting with the BgBot code, open the file called BOT.QC and scroll down to this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+//=============================================================
+// BotActivate - Activates the bot
+//=============================================================
+void (string name) BotCreate =
+{
+// sounds and models precached in the world.qc file
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paste your glow-in-the-dark code at the end of this subroutine. Also, you must add it to the end of the next routine, called botrespawn().<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You're done. With our change, the player, monsters, and bots will emit light, but the rest of the level will be pitch black. Even though we did a lot of pasting, all we really did was turn off the lights and add special effects to the contestants.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When you start Quake, bring down the console and type "temp1 1" without the quotes. Then load your favorite map.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Shooting rockets in the dark can be very cool.<BR>
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+

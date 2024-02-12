@@ -1,0 +1,105 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Realistic Aiming</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today we have a rarity, a lesson which both simple <I>and</I> effective. As you know, I take shortcuts to teach you in the quickest way. But this tutorial is naturally easy and fully functional.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I remember when people made a big deal about the Omicron Bot's aiming, the fact that he would shoot at your last location and all that. Well, in a few minutes your bot will be able to do that and more. So there, Omicron.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We are going to do realistic aiming. That is, if you are one of those good players that move around alot, he will be shooting at your previous locations. If you are a stop-and-shoot kind of guy, he will nail you real good. In addition, there wil be ten -- count 'em, ten! -- different skill levels of bot aiming, from perfect to pathetic.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Unfortunately, we need three new variables to achieve this. As you may know, I am very system-conscious, and I normally don't like to use three variables for one simple feature. But of course, bot aiming is a critical feature. So open up defs.qc and drop to the bottom. There, add these lines:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.vector aim_location;
+.float aim_time;
+.float aim_delay;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, let me explain these and their roles in our new technique. The bot's aim_location is the point where he will shoot, regardless of where is enemy is standing in that instant. His aim_time is the next time he will refresh his aim_location, that is, make his aim_location the place where his foe is standing. And his aim_delay is the frequency at which he will do the refreshing.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eh, what?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That confused me, and I even wrote the darn thing. Let's say it's time for the bot to refresh his aiming. So he sets his aim_location to the location of his enemy. But then his enemy is very fast, and moves away from that place. The bot will not re-aim until his aim_time has expired. And the bigger his aim_delay is, the less he will aim at his enemy correctly.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The neat thing is that the bot will be shooting at the spot where you last stood!<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Save and close that file, and open up tutor.qc. Scroll down to bot_aim_at_enemy(), which originally should look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+
+	return normalize(self.enemy.origin - self.origin);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, the bot shoots at the exact location of his enemy each and every frame. Let's change that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+
+	if (time > self.aim_time)
+		{
+		self.aim_location = normalize(self.enemy.origin - self.origin);
+		self.aim_time = time + self.aim_delay;
+		}
+
+	return self.aim_location;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Things are coming into focus now. As you can see, if his aim_time is expired, he aims directly at his foe. Then he sets his delay. If his aim_time has not expired, he shoots in the last spot he saw his enemy. Groovy, huh?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now scroll down to the end of the file, to create_bot(). At the end of that subroutine, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	local float a;
+	a = floor(random() * 10) + 1;
+	self.aim_delay = a / 10;
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is groovy too. We create a random number from one to 10. We divide it by ten. It ends up being a value from 0.1 to 1.0, or, in other words, from a tenth of a second to a second. This will be his aiming delay time.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now, remember that the bot thinks every tenth of a second. If if aim_delay is 0.1, that means he will refresh his aim every single frame, meaning he shoots perfectly. But if his aim_delay is 1.0, he will only re-aim at his enemy every second, which is a long time in Quake, which says he is a bad aim.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eh? Eh? Nifty, eh? I kind of like this method. In addition, as we said, there are ten possible aim_delay values, so nearly every bot will aim at different skills. Of course, you can tweak this, set it to a player-controlled skill level, even relate it to the bot's personality. And if you want tougher bots, you can have less than ten aiming delays as well.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, we done good.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Random numbers are a great tool<BR>
+2. Pay attention to your vector variables<BR>
+3. The Omicron Bot ain't all that<P>
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

@@ -1,0 +1,463 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Rocket Arena</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have a big big lesson today. We will learn how to adapt our bot to play the cool multiplayer mod called <I>Rocket Arena.</I><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I know what you're thinking already. True, this has been done before with the Omicron Bot. True, it was kind of dull. And true, RA amounts to little more than deathmatch.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I thought a lot about this myself. But I realized that for us bot authors, there were plenty of reasons for our bots to learn this game. For instance:<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- you get to observe your bot's performance<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- RA is a great way to improve your bot's fighting<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- you don't have to worry about the dreaded navigation<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- it's a game that bots understand quickly<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- unlike the Omicron, our bot has multiple attack styles<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- you can easily modify it in a number of ways<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- there are dozens of RA maps available<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A couple of notes. One, since RA is a specific game, this lesson will not be written as a new mode. Two, you will likely have to improve your bot afterwards for him to be great at it. I hope I haven't scared you off. Alrighty then, we can get to it.<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's begin at the beginning. We need to declare some stuff. Open up defs.qc and move to the bottom. Insert this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.float in_game;
+entity last_arena_spot;
+entity winner;
+
+void(vector org) spawn_tfog;
+void(vector org, entity death_owner) spawn_tdeath;
+void() delay_next_contestant;
+void(entity targ) give_random_weapon;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first three lines are new variables we need, the next four are subroutines that we will call before they are written. Next, open up combat.qc and move down to the sub T_Damage(), which begins like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+============
+T_Damage
+
+The damage is coming from inflictor, but get mad at attacker
+This should be the only function that ever reduces health.
+============
+*/
+void(entity targ, entity inflictor, entity attacker, float damage) T_Damage=
+{
+	local	vector	dir;
+	local	entity	oldself;
+	local	float	save;
+	local	float	take;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is where <B>all</B> damage in QuakeC is done. We don't want the observers to be hurt by any stray projectiles, so after that, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (targ.in_game != TRUE)
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What this says is, "If the target is not in the game, then leave the subroutine." Next, slip down a bit in the same subroutine until you see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (targ.health <= 0)
+	{
+		Killed (targ, attacker);
+		return;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here the target is being killed off by the attacker. We want to mark the target as already having been in the arena, and we want to mark the winner. And because one guy was eliminated, we want to choose a new contestant. So replace those five lines with these:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (targ.health <= 0)
+	{
+		Killed (targ, attacker);
+		targ.in_game = 9999;
+		if (targ != attacker)
+			winner = attacker;
+		delay_next_contestant();
+		return;
+	}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See? That was simple. You can save and close that file. Next, we want to open client.qc, where the player is spawned. We want him to start with a random weapon. So go down into the subroutine PutClientInServer(). You will see a line that says DecodeLevelParms (); After that line, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	give_random_weapon(self);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It's funny, but here we actually used a subroutine that was meant for the Tutor Bot! Isn't life great? Save and close. Next we move onto the bot himself. Naturally, when he is an observer, he will just stand there peacefully, not looking for trouble. So we have to modify his two spotting routines. Open up tutor.qc and scroll down to bot_look_for_players(), which begins like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() bot_look_for_players =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	local entity	client;
+	local float		r;
+
+// this is just like id's FindTarget(), he's looking for clients
+
+
+	client = checkclient ();
+	if (!client)
+		return FALSE;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add this after that:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.in_game != TRUE)
+		return FALSE;
+	if (client.in_game != TRUE)
+		return FALSE;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now he will only start a fight with a player when he and the player are both "in game," or in the arena. Glide down to bot_look_for_bots() which starts like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() bot_look_for_bots =
+// ------------------------------------------------
+{
+local entity found, foe;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right after that, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.in_game != TRUE)
+		return FALSE;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, now if he is not in game, he will not look for other bots to fight. Slide down a wee bit more until you see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	while(foe)
+		{
+		if (visible(foe) && foe != self && foe.health > 0) 
+			found = foe;
+		if (teamplay && found.team == self.team)
+			found = world;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right after that last line, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		if (found.in_game != TRUE)
+			found = world;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If the bot he found is not in game, he will ignore him. Simple stuff. We will move onto something a little different. Scroll down to the subroutine bot_pain(), which will look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void(entity attacker, float damage)	bot_pain =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, now <B>before</B> that routine, add this sequence:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()  bot_step1		=[	$rockrun1,	bot_step2	] { self.angles_y = self.angles_y + floor(random() * 9) * 10; walkmove(self.angles_y, 20);};
+void()  bot_step2		=[	$rockrun2,	bot_step3	] { walkmove(self.angles_y, 20);};
+void()  bot_step3		=[	$rockrun3,	bot_step4	] { walkmove(self.angles_y, 20);};
+void()  bot_step4		=[	$rockrun4,	bot_step5	] { walkmove(self.angles_y, 20);};
+void()  bot_step5		=[	$rockrun5,	bot_step6	] { walkmove(self.angles_y, 20);};
+void()  bot_step6		=[	$rockrun6,	bot_step7	] { walkmove(self.angles_y, 20);};
+void()  bot_step7		=[	$rockrun1,	bot_step8	] { walkmove(self.angles_y, 20);};
+void()  bot_step8		=[	$rockrun2,	bot_stand1	] { walkmove(self.angles_y, 20);};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uh huh. This a simple animation sequence. Call it a script if you like. The bot will turn at a random angle, then he will walk forward for about a second. Then he will go to his stand routine. You see, we want to avoid telefragging in RA. So we told the bot to "step away" from the spawning point where he would be telefragged when other contestants respawned. Get it? Good.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, we want to scroll down to the end of the subroutine respawn_bot() which should look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// making him stand for a bit
+	self.pausetime = time + 5;
+	self.nextthink = time + 0.1 + random();
+	self.think = self.th_stand;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, we don't want it to look like that. We want to replace that with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// making him stand for a long while
+	self.pausetime = time + 9999;
+	self.nextthink = time + 0.1 + random();
+	self.think = bot_step1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cool. Since he died and will respawn as and observer, we want him to pause for a long time. And as we said, we want him to step away from the spawn point, so we tell him to think our little script. Nifty.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, slide down to the end of create_bot(), where you'll see this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.think = bot.th_walk;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;He will begin the game as an observer, so we want him to just stand there. Change that line to these:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.pausetime = time + 9999;
+	bot.think = bot_step1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nearly the same thing as before. Easy as cake. Okay, we're getting through this. Next, we want to open weapons.qc. Near the top, we want to add this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() begin_ra_game;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alrighty then, let us slip down to W_Attack(), a subroutine starting like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() W_Attack =
+{
+	local	float	r;
+
+	if (!W_CheckNoAmmo ())
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;W_Attack() is where all the player firing starts. When he is in the observation area, we want to stop him from firing. So after the previous, add the following:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.in_game != TRUE)
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If he's not in game, we leave this routine. Now go down to the routine ImpulseCommands(). In there, add this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		if (self.impulse == 150)
+			begin_ra_game();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Do you see what we did? First we declared a new subroutine. Then we allowed the player to type an impulse to call that routine, thereby starting the Rocket Arena game.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Unfortunately, we now have to write that subroutine, and a few others. Start a new file named "ra.qc" without the quotes. We'll do this one subroutine at a time. In that new file, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void(entity plr) put_contestant_in_game =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity ent;
+
+	if (!last_arena_spot)
+		last_arena_spot = world;
+
+	ent =	find(last_arena_spot, classname, "info_teleport_destination");
+	last_arena_spot = ent;
+
+	if (last_arena_spot.classname != "info_teleport_destination")
+		{
+		last_arena_spot = find(world, classname, "info_teleport_destination");
+		ent = last_arena_spot;
+		}
+
+	spawn_tfog (plr.origin);
+	spawn_tfog (ent.origin);
+	spawn_tdeath(ent.origin, plr);
+	setorigin(plr, ent.origin);
+	plr.flags = plr.flags - (plr.flags & FL_ONGROUND);
+	makevectors(plr.angles);
+	plr.velocity = v_forward * 25;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is simpler than it looks. It merely finds the next spawning point inside the arena. Then it basically teleports the selected contestant to that point. Next, after that past this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() select_contestant;
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() get_next_contestant =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	select_contestant();
+	remove(self);
+
+};
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() delay_next_contestant =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity ent;
+
+	ent = spawn();
+	ent.think  = get_next_contestant;
+	ent.nextthink = time + 6;
+	
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is one declaration and two new subroutines. When a contestant is killed, we want to get another. However, we don't want to immediately put him in, because that would get too hectic and confusing. So we create an entity that will select a new contestant in six seconds after the previous one was killed. Then that entity removes itself. After that stuff, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() reset_all_contestants =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity him;
+
+	him = nextent(world);
+	while(him)
+		{
+		if ( (him.classname == "player" || him.classname == "bot") && him.health > 0 && him.in_game != TRUE)
+			him.in_game = FALSE;
+		him = nextent(him);
+		}
+
+	delay_next_contestant();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When a contestant is killed, his "in_game" status is marked as 9999, so we know he already got a turn. After everyone gets a turn, we need to reset all of those in game statuses as FALSE. This subroutine looks for all bots and players who are alive and who have been in the arena already, and resets that status. Then it gets a new contestant. After that, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() select_contestant =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity him, selected;
+
+	him = nextent(world);
+	while(him)
+		{
+		if ( (him.classname == "player" || him.classname == "bot") && him.health > 0 && him.in_game == FALSE)
+			selected = him;
+		him = nextent(him);
+		}
+
+	if (!selected)
+		{
+		bprint(winner.netname);
+		bprint(" is the current champion!\n");
+		sound (winner, CHAN_VOICE, "weapons/lstart.wav", 1, ATTN_NONE);
+		reset_all_contestants();
+		return;
+		}
+
+	selected.in_game = TRUE;
+	bprint(selected.netname);
+	bprint(" enters the arena\n");
+	if (selected.classname == "bot")
+		{
+		selected.think = selected.th_walk;
+		selected.pausetime = 0;
+		selected.nextthink = time + 0.1;
+		}
+
+	put_contestant_in_game(selected);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oh boy. This sub does a few things. It looks for a bot or player who is alive and who has not been in yet. If it does not find one, it declares a winner and starts a new round. Or, it teleports the new contestant into the arena and marks him as in game. If he is a bot, it tells him to begin walking. Just think about it in English terms and you'll be alright.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whew, after that long routine, you'll be relieved to know that we only have only more left! After the previous stuff, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() begin_ra_game =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	select_contestant();
+	select_contestant();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rockin. This of course starts the whole process, and is called when the player types impulse 150 at his console. Save and close that file. We now have to include that new file when we compile our code. So open up progs.src, which lists all the files that will make up our progs.dat file. After the line that says "world.qc" add this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+ra.qc
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That is the name of our new file, so we're ready to go. Save and compile. This lesson was long, but if you look over it again, you'll see it has a logic to it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For better of worse, our version of Rocket Arena does not act like the real version. I wrote the code to apply specifically to our bot. I'm sure you may feel the need to edit it to suit your liking. For instance, a contestant starts off with just one random weapon instead of all of them.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There are plenty of other things, as well. You could download a multiple skin file for your bot. You could add to his fighting styles. You could add new weapons or sounds. You could make his enemy-spotting routines work faster. You could add chatting among the observers. It's your game. It's your choice.<P>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notes: I recommend getting the Rocket Arena file at <A HREF="ftp://ftp.cdrom.com/pub/idgames2/planetquake/servers/arena/rarena10.zip">ftp://ftp.cdrom.com/pub/idgames2/planetquake/servers/arena/rarena10.zip</A> because it is only 1.2 meg and because it has no progs.dat file, so you're ready to go. Also, please remember that RA is the creation of the talented <A HREF="mailto:wrightd@stanford.edu">David 'crt' Wright</A>, so if you distribute an RA bot, please credit him.<P>
+<P>&nbsp;<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Rocket Arena Creator: <A HREF="mailto:wrightd@stanford.edu">David 'crt' Wright</A><BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

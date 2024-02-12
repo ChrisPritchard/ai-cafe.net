@@ -1,0 +1,100 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Improved Naming System</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I was playing with my bot, the Mr. Bot (Tutor Bot based) and was getting sick of having 5 bots with the same name. So, I got an idea. After some discussion with Coffee, I came up with this tutorial. This works quite simply: it checks how many bots there are and gives them the correct name in sequence, but you don't need to know any of that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is quite simple, really.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First step. Open tutor.qc and scroll down to this function: (your names in this function might be different)<BR>
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+string() bot_name =
+// ------------------------------------------------
+{
+local float n;
+
+	n = floor(random() * 11);
+	if (n == 0) return "Frog";
+	else if (n == 1) return "Reaper";
+	else if (n == 2) return "Omicron";
+	else if (n == 3) return "Estep";
+	else if (n == 4) return "Zeus";
+	else if (n == 5) return "Cujo";
+	else if (n == 6) return "Gyro";
+	else if (n == 7) return "Oak";
+	else if (n == 8) return "Eliminator";
+	else if (n == 9) return "Eraser";
+	else return "BG";
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And replace that WHOLE thing with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+string() bot_name =
+// ------------------------------------------------
+{
+	if (bot_count == 1) return "Mirador";
+	else if (bot_count == 2) return "Placid";
+	else if (bot_count == 3) return "Q-Ball";
+	else if (bot_count == 4) return "Devastator";
+	else if (bot_count == 5) return "Maestro";
+	else if (bot_count == 6) return "Hasttie";
+	else if (bot_count == 7) return "Hasttie";
+	else if (bot_count == 8) return "Velza";
+	else if (bot_count == 9) return "Phunder";
+	else if (bot_count == 10) return "Sentinel";
+	else if (bot_count == 11) return "Eraser";
+	else if (bot_count == 12) return "RezhiN";
+	else if (bot_count == 13) return "Malengine";
+	else if (bot_count == 14) return "DeadFrog";
+	else if (bot_count == 15) return "Rasputin";
+	else return "JiNk";
+
+	bot_count = bot_count + 1;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Feel completely free to change the names to whatever you want. All that function does is check the bot_count, and give it the appropriate name in sequence. Then it adds one to bot_count. In other words, we now know how many bots are in the game.<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hopefully, you're a smart fellow and asked "But where is bot_count defined?". Well, let's do that now, shall we? Close tutor.qc and open up defs.qc<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;At the very end, put this line in:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+float bot_count;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That was easy, wasn't it? This is called a global variable. If the word "float" had a period before it, it would have been called a field. That's all there is to it!<BR>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. You can use globals for many different things<BR>
+2. Names are cool.<BR>
+3. Pizza is yummy.<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: RezhiN<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:mrtate@planethalflife.com">mrtate@planethalflife.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 31478276<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

@@ -1,0 +1,112 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<FONT FACE="Impact" SIZE=+3>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER>Learning AI Terminology</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay class, get off those desks and sit down. Put away your paper airplanes and comic books. It's time for bot school to begin.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My name is Mr. Coffee, and we'll be spending some time together. This initial lesson of my AI series will introduce you to some QuakeC aspects relevant to artificial intelligence.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now I see you squirming in your seats. Don't fret, I will make my classes easy, fun, and brief. I had no experience in C or C++ before beginning to code for Quake. In fact, I still don't have any. However, I have worked as a professional writer, so you should be able to understand me.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Through these lessons, you will learn that "monster intelligence" is not a contradiction in terms. You can use these techniques to build a deathmatch bot or give your conversion smart creatures.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, sharpen your pencils. It's time to begin. We will start with a glossary of QuakeC and AI programming terms, simplest to hardest.<P>
+<P>&nbsp;<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>Subroutine</H3></CENTER>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is the building block of any program. It is a certain activity that is separated by braces from the code around it. In QuakeC it is labeled as a "void." A subroutine may look like this:<P>
+
+<B><FONT COLOR="DFBFFF">
+void() ai_face =<BR>
+{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.angles_y = vectoyaw(self.origin - self.enemy.origin);<BR>
+};<P>
+</FONT></B>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That is a whole subroutine. This one will turn the monster toward his enemy. We write subs to use in other parts of the program, so we don't have to repeat the typing. Here is a short list of AI-related id subroutines and what they do:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_walk() ... what a monster thinks while roaming<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;movetogoal() ... a C function that will move a monster to his goal entity<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;walkmove() ... makes a creature walk in a given direction<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_run() ... what a beast thinks while fighting<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_face() ... turns a beast towards his enemy<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_run_slide() ... makes a creature strafe<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_Damage() ... routine used to hurt players or monsters<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FindTarget() ... looks for enemies, called every 0.1 seconds<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;visible() ... tells the monster if he can see his foe<P>
+<P>&nbsp;<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>Variable</H3></CENTER>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A number, name or location stored in memory is called a variable, because it may often vary. Your health, weapon type, and location are some variables.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The three types of variables in QuakeC are string, float, and vector. A string is made of letters, like your screen name. A float is a number value, like your total rockets. And a vector is a location, made from height, width, and depth. Your coordinates in the world are a vector.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here is a list of variables concerning AI:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dist ... a variable used in many id routines meaning the distance he will walk<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;movedist ... same as above, only a global variable<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.idealyaw ... used by id, this means the direction he wants to face<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.angles_y ... used by myself, meaning the direction he is facing<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.goalentity ... the thing he will move toward in the movetogoal() subroutine<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.attack_state ... this tells what fighting style he is using<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.attack_finished .. how long a monster's or player's attack will last<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.origin ... the x, y, z location of where he is in the world<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.velocity ... the speed someone is moving<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.owner ... usually this tells the game who fired rockets or other projectiles<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.enemy ... the entity he will face and fight<P>
+<P>&nbsp;<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>Entity</H3></CENTER>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Every active thing in the Quake world is an entity. The player, the monsters, ammo, holograms, the rockets in the air, even the map itself. They each have a set of their own variables, like mentioned above. They can be solid or transparent, thinking or non-thinking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Several of the variables listed above, like self.goalentity and self.enemy, actually refer to entities, so they should be mentioned here. The following is a list of features or behaviors that an entity can have:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.movetype ... how it moves; for instance, rockets are MOVETYPE_FLYMISSILE<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.think ... what subroutine it will execute, could be nothing<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.nextthink ... the time when it executes its self.think routine<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.solid ... how other entities will react to it; monsters are SOLID_BSP<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.touch ... this routine will happen when another entity touches it<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>Finite State</H3></CENTER>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, now we're haning with the big dogs. Where the above three words are QuakeC terms, finite state is an artificial intelligence term.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, monsters in most action games are called "finite state machines." Finite, of course, means limited. Creatures move from one limited behavior to the next. For instance, standing, walking, fighting.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Indeed, the behavior of these beasts is so finite that we can list *all* of the thoughts -- the states -- that they might be in:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_walk() ... that monster's walking routine<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_stand() ... his standing routine<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_pain() ... his pain animation<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_die() ... the routine that happens when he dies<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_run() ... his attacking thoughts<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_melee() ... that creature's particular melee attack<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_missile() ... that monster's missile attack<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Quake's creatures will *always* be in one of these states, always. Even bots think in finite states. This will help you track down what a particular monster is thinking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, I think that's enough definitions for one day. Obviously, I can't explain every QuakeC term to you. So I have some homework for you. I recommend opening up the file AI.QC and poke around, see what each subroutine looks like and how variables are used.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In a future lesson we'll try changing those variables and improving those routines. You'll be surprised at how fast you can pick up artificial intelligence. After all, none of those monsters are rocket scientists.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Class dismissed.<P>
+
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

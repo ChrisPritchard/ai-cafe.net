@@ -1,0 +1,137 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Improving the Monsters</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So you want to be a programmer, eh? You want to write artificial intelligence just like the big boys, right? No problem! You too can code AI like the game companies do. Step right this way!<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First off, let's take a short look at the AI of the two hottest 3D games, Quake 2 and Unreal. Both titles promised advanced monster smarts like evasion, higher awareness, and random roaming. But, um, well, um, let's just say most of it is, well, hard to spot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;However, we will learn all three of those features today! And tomorrow we will be working at highly successful software firms, right? Then we will be paid embarassingly high sums of money, right?<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>1. Attack evasion.</H3></CENTER>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, now for the first lesson, boys and girls. The most common complaint of creature intelligence is that they just kind of stand there waiting for the buckshot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Perhaps all demons from hell and aliens from space are pain-loving sado-masochists. But we're looking for a more intiguing opponent.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So what we want to do is open the AI.QC file, where most of the thinking <I>should</I> take place. Scroll down to the last subroutine, ai_run(). This is what is going through the monster's head during a fight. It's a short subroutine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's make the dude strafe while you are shooting. Go to the section halfway down that looks like this:<P>
+
+<B><FONT COLOR="DFBFFF">
+// look for other coop players<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (coop && self.search_time < time)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (FindTarget ())<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;enemy_infront = infront(self.enemy);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;enemy_range = range(self.enemy);<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;enemy_yaw = vectoyaw(self.enemy.origin - self.origin);<P>
+</FONT></B>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After this line add this:<P>
+
+<B><FONT COLOR="DFBFFF">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (time < self.enemy.attack_finished)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_run_slide();<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<P>
+</FONT></B>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boom, that's it! Five years of 3D action games could be changed by five lines of code. The variable .attack_finished is set to something, say, one second for a rocket, to represent how long your attack will take. So the monster instantly knows when you are firing.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ironically, the subroutine ai_run_slide() is already in QuakeC but is not used much. Go figure. It makes a monster slide from one side to another.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I could talk a whole lot more, but it's as simple as that. That's how to add attack evasion.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>2. Higher awareness.</H3></CENTER>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This lesson could cover a whole load of behaviors. For now, let's make the creature retreat when his health is low.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Underneath the new code we added above, insert this:<P>
+
+<B><FONT COLOR="DFBFFF">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (self.health < 25)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_back();<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<P>
+</FONT></B>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oh gosh, this is just too easy. I'm going to have to add some arcane jargon or technical terms or something. Anyway, when the monster's health is less than 25 points, he will simply back up, using id's ai_back() routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, we can make it more complicated. We can make him angry when he's wounded. Replace the above code with this stuff:<P>
+
+<B><FONT COLOR="DFBFFF">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (self.health < 25)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_back();<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.th_missile();<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<P>
+</FONT></B>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, if you noticed, there is only one new line of code, his "missile attack think." It says "self" because his missile attack is his own, and each of Quake's monsters have their own.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So now he should back up and attack as well. Whoa, neat. I hope the game companies are ready this.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>3. Random roaming.</H3></CENTER>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again, this topic is quite broad. It may not have a purpose except to seem cool, or to add replay value to maps. But perhaps you can teach your monster to roam the level for a reason.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open the MONSTERS.QC file, which contains a lot of creature initialization. Scroll down to the walkmonster_start_go() subroutine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What you want to do is replace the two references to <B>self.th_stand</B> with <B>self.th_walk.</B> If you wish, you can simply use the "search and replace" feature in your text editor.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That can't be the secret to monster roaming, can it? Yes, a start anyway. On start-up, Quake's monsters are told to stand. With our changes they will start to walk when the game has begun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, these monsters use a subroutine called movetogoal() to travel. This is called from QuakeC but is really a C function from id. The creature will randomly move toward his goal entity during this function.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here is the subroutine they think while walking:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+=============
+ai_walk
+
+The monster is walking it's beat
+=============
+*/
+void(float dist) ai_walk =
+{
+	local vector		mtemp;
+	
+	movedist = dist;<P>
+	
+	if (self.classname == "monster_dragon")
+	{
+		movetogoal (dist);
+		return;
+	}
+	// check for noticing a player
+	if (FindTarget ())
+		return;
+
+	movetogoal (dist);
+};
+</PRE>
+</FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can see, there's not much too it. In fact, the only lines here that do anything are FindTarget() and movetogoal(). The rest is just excess fat.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, our creature won't explore the whole map or come straight for you. Many authors think movetogoal() is limited, but it is nonetheless powerful. It tells the creature to move this and that way around obstacles, and it's only one line of code.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, now you've learned how to create monster intelligence smarter than 90 percent of the 3D games out there. Of course there is alot more to it. But now you know enough to get one of those cushy game programmer jobs and make a million dollars.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For the next lesson, we'll learn things that will make us a billion dollars.<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

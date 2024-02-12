@@ -1,0 +1,100 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Adjusting Aim To Avoid Obstacles</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's a pretty long title for a tutorial! Daft though the name may sound, this tutorial contains my greatest ever routine. Yes, I am showing you the greatest secret of the <A HREF = "http://www.storm-1.freeserve.co.uk">ELFBOt</A>!<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Like all good tutorials, it centers around one simple routine. The basic premise is this: "If the bot can see his opponent, but shooting at it directly will hit the lip of a ledge or an obstacle in the way, then work out a direction it can fire in that will hit the target.". Several bots have done this, including the reaper bots, but their code to do it was severely limiting, in that it simply shoots a little higher on the enemy if a straight shot would miss. This is not very profesional, which is why I love this routine. It is only a few lines long, yet it is the best bot aiming routine ever written!<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Without further ado, let's make our bots aim better than the reapers. Open up tutor.qc and scroll down to bot_aim_at_enemy, where most of my tutorials seem to take place. It probably looks nothing like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+
+	return normalize(self.enemy.origin - self.origin);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That is our current aiming routine, so lets replace it with this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// -------------------------------------
+vector() bot_aim_at_enemy =
+// -------------------------------------
+{
+	traceline (self.origin, self.enemy.origin, FALSE, self);
+
+	if ((trace_fraction != 1) || (trace_ent != self.enemy))
+		return bot_calculate_aim();
+
+	return normalize(self.enemy.origin - self.origin);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; What this basically does is this. It draws a traceline directly from the bot's origin to the enemy's, and if it hits a wall or another entity, then it returns a vector given by bot_calculate_aim. Otherwise, it returns the usual vector for bot aiming. If you have already done my target leading or any other alteration to bot_aim_at_enemy, then put the code above, with the exception of the last line before any of the code you currently have in the routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm sure you're all wondering about my marvellous routine, so here it is! Put this before bot_aim_at_enemy:
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+vector () bot_calculate_aim =
+{
+local float num_tries;
+local vector end;
+
+	num_tries = 25;
+
+	while (num_tries)
+		{
+		end = self.enemy.origin;
+		end_x = end_x + crandom() * 20;
+		end_y = end_y + crandom() * 20;
+		end_z = end_z + crandom() * 20;
+		traceline (self.origin, end, TRUE, self);
+		if ((trace_fraction == 1) && (trace_ent == self.enemy))
+			return end - self.origin;
+		num_tries = num_tries - 1;
+		}
+
+	return self.enemy.origin - self.origin;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's truly is it! It's pretty clear how it works, but just in case, here's an explanation in English. "Draw a traceline from the bot's origin, with it's end at a random position in the area of the target. If it hits the target, and not a wall or another entity, then return this trajectory to shoot along. Otherwise ,repeat the process until either a trajectory is found that hits or it has tried 25 times, in which case it decides it can't hit the target properly, and just shoots directly at the target instead."<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I really love that routine, so please credit me if you use it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's the end of yet another tutorial. Now go out an tell your friends that your bot aims better than the Reaper Bot.
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Never assume that the Reaper bot does things the best possible way.<BR>
+2. Only bad bots can't aim.<BR>
+3. Recursively repeating code is sometimes a good idea.<P>
+
+<CENTER><P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="MS Sans Serif"><FONT SIZE=+0>
+Author: SkinSki<BR>
+Questions: <A HREF="mailto:skinski@storm-1.freeserve.co.uk">skinski@storm-1.freeserve.co.uk<BR></A>
+AI chat on ICQ: 30578982</FONT></FONT><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center></P></CENTER>
+</BODY>
+</HTML>

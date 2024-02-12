@@ -1,0 +1,104 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Homework Assignment No. 1 Answer</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, school is back in session. Time to hand in your first homework assignment. And don't you tell me the bot ate it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your project was to create a sort of time-delay message of the day, with one part printing after the other was done. This can be accomplished in just one file in just one subroutine. That is client.qc and PlayerPostThink() respectively.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;At the end of that routine, you could have posted something like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time < 3)
+		centerprint(self, "Now playing the WonkaBot\n");
+	if (time >= 3 && time < 6)
+		centerprint(self, "Written by Mr. Wonka\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's it. Remember, PlayerPostThink() is called after every frame of animation; basically, it is called almost continuously. Remember something else: you cannot print() anything when the world first spawns. It's just a little weird thing about QuakeC.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Did you come up with that? No? That's okay, because there is usually more than one way to skin a bot, so to speak. Just for a perverse thrill, let's look at another way of doing that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;At the very end of PutClientInServer(), you could have added this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	create_message_machine();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then, before that subroutine, you could paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() create_message_machine =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity mach;
+
+	if (time > 3)
+		return;
+
+	mach = spawn();
+	mach.owner = self;
+	mach.think = message_think;
+	mach.nextthink = time + 0.1;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right. Recall that we said that we cannot print a message immediately after the world spawns. So here we create an independent "machine" to print a message in 0.1 seconds.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before that routine, paste this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() message_think =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	self.nextthink = time + 0.1;
+
+	if (time < 3)
+		centerprint(self.owner, "Now playing the WonkaBot\n");
+	if (time >= 3 && time < 6)
+		centerprint(self.owner, "Written by Mr. Wonka\n");
+	if (time > 6)
+		remove(self);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The self here is the machine entity; the self.owner is the player. This routine prints the same message as before to that player's screen. It thinks every 0.1 seconds. After six seconds, it removes itself, never to be seen nor heard again.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This seems unusual, I know. But I often use external "machine" entities like this to execute certain functions at certain times. They operate independently from any player or bot and thus can be used to regulate aspects of the game.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That ends the first homework assignment. How did you do? I'm sure you did well. I hope you did, because the next one will be a bit more challenging.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Entities can be used for anything<BR>
+2. QuakeC doesn't always operate as you think it should<BR>
+3. Simple solutions rock<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

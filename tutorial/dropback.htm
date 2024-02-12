@@ -1,0 +1,112 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Microsoft FrontPage Express 2.0">
+<title>AI Tutorial</title>
+</head>
+
+<body bgcolor="#0080C0" text="#FFFFFF" link="#DFBFFF"
+vlink="#DFBFFF" alink="#DFBFFF">
+
+
+<p><a name="top"></a></p>
+
+<hr size="3">
+
+<p align="center"><font size="6" face="Impact">Backpack Dropping</font></p>
+
+<hr size="3">
+
+<p>&nbsp;</p>
+
+<p><font size="3" face="MS Sans Serif">
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hi,
+its Ze0 here again and today i'm going to show you how to fix
+something that you may of been concerned with or may have not
+even noticed. Now lets get on with the lesson shall we?</font></p>
+
+<p><font size="3" face="MS Sans Serif">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may of come to notice
+that the Tutor Bot doesn't drop backpacks ALL the time this isn't
+good, it takes away some of the realism of emulating a real
+client as real players drop backpacks every time they die, the
+Tutor Bot only drops a backpack randomly. Easy to fix..</font></p>
+
+<p><font size="3" face="MS Sans Serif">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Scroll down to
+bot_drop_pack() in tutor.qc</font></p>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_drop_pack =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	if (random () < 0.5)
+		DropBackpack();
+};
+</FONT>
+</PRE>
+
+<p><font size="3" face="MS Sans Serif">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is what you should
+see if you haven't modified the original routine. Being the smart
+coder that you are I guess you've already spotted the problem,
+what we have to do is remove the bots dropping backpacks randomly
+and make them drop backpacks always.</font></p>
+
+<p><font size="3" face="MS Sans Serif">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So lets take out:<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (random () < 0.5)
+</FONT>
+</PRE>
+
+<p><font size="3" face="MS Sans Serif">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now you should have this:</font></p>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_drop_pack =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	DropBackpack();
+};
+</FONT>
+</PRE>
+
+<p><font size="3" face="MS Sans Serif">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And thats it. Your bots will now drop backpacks always whenver they die. Any questions?</font></p>
+
+<p>&nbsp;</p>
+
+<hr size="3">
+
+<h3 align="center"><font size="3" face="MS Sans Serif">
+What We Learned</font></h3>
+
+<p><font size="3" face="MS Sans Serif">
+1. The Tutor Bot is far from perfect<br>
+2. Problems are fun to solve<br>
+3. Players always drop backpacks<br>
+4. This is another step to making the Tutor Bot more like a client</font></p>
+
+<p align="center">&nbsp;</p>
+
+<hr size="3">
+
+<p align="center"><font size="3" face="MS Sans Serif">Author: Ze0<br>
+Questions: </font><a href="mailto:ze0@botepidemic.com"><font size="3"
+face="MS Sans Serif">ze0@botepidemic.com</font></a><font size="3"
+face="MS Sans Serif"> <br>
+AI chat on ICQ: 4801437<br>
+</font></p>
+
+<hr size="3">
+</body>
+</html>

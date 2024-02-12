@@ -1,0 +1,307 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Bots On Scoreboard</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The Tutor Bot is about to graduate into the real world.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm sure this has been one of the most anticipated tutorials. After all, everyone wants their bots to come up on the scoreboard. This is the simple most important aspect in making your artificial opponent seem like a player. The time is now.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We all have <A HREF="mailto:alan.kivlin@cybersurf.co.uk">Alan Kivlin</A> to thank for this; he did what no one thought possible. The cool thing is that this lesson is more busy work than anything else. It's one of those tuts where you just have to know how to do it, you don't have to understand it.<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step One. Open up world.qc and scroll down to the sub worldspawn(), where the Quake world is born. You will see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+//=======================
+/*QUAKED worldspawn (0 0 0) ?
+Only used for the world entity.
+Set message to the level name.
+Set sounds to the cd track to play.
+
+World Types:
+0: medieval
+1: metal
+2: base
+*/
+//=======================
+void() worldspawn =
+{
+	lastspawn = world;
+	InitBodyQue ();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After this code, add the following line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	clientInitMaxClients();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When the world starts, we will call this subroutine, which Alan wrote. Just as it looks, this sub will "initialize the maximum number of clients," or basically count the entities in the list. Anyway, save and close that file.<P>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step two. Open client.qc and scroll down to the routine ClientConnect(). It looks like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+===========
+ClientConnect
+
+called when a player connects to a server
+============
+*/
+void() ClientConnect =
+{
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, add the following code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+local entity bot;
+
+	self.fClientNo = self.colormap - 1;
+
+	if( clientIsActive( self.fClientNo ) )
+		botInvalidClientNo( self.fClientNo );
+
+	clientSetUsed( self.fClientNo );
+
+	bot = find( world, classname, "bot" );
+	while( bot )
+		{
+		msgUpdateNameToPlayer( self, bot.fClientNo, bot.netname );
+		msgUpdateColorsToPlayer( self, bot.fClientNo, bot.fShirt, bot.fPants );
+		msgUpdateFragsToPlayer( self, bot.fClientNo, bot.frags );
+		bot = find( bot, classname, "bot" );
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This prints out every bot's name, color, and frags each time a player connects to the server. Wow. Next.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right below the sub ClientConnect(), you will see another one called ClientDisconnect(). See this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+===========
+ClientDisconnect
+
+called when a player disconnects from a server
+============
+*/
+void() ClientDisconnect =
+{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add the following line after that stuff:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	clientSetFree( self.fClientNo );
+</FONT>
+</PRE>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step three. Scroll down to the routine ClientObituary(), which is the last one in client.qc. This is where the frags are updated and the death messages are printed. It's pretty long, and a bit complex. But we'll do alright.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What we are going to do is to update the frags on every player's screen to include the bots' frags. This will be just busy work. Scroll down to this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		attacker.owner.frags = attacker.owner.frags + 1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add this one right under it:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		msgUpdateFragsToAll (attacker.owner.fClientNo, attacker.owner.frags);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See what we did? Since the attacker owner earned a frag, we "updated frags to all" players. (I'm telling you this in case you -- or I -- miss one of these lines. Everywhere in ClientObituary() where frags are changed, we need one of these "msg" lines.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next scroll to this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		targ.frags = targ.frags - 1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		msgUpdateFragsToAll (targ.fClientNo, targ.frags);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next go down to this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		attacker.frags = attacker.frags - 1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		msgUpdateFragsToAll (attacker.fClientNo, attacker.frags);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now go below to this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		attacker.frags = attacker.frags - 1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And add this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		msgUpdateFragsToAll (attacker.fClientNo, attacker.frags);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again slide down more to this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		attacker.frags = attacker.frags + 1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Paste this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		msgUpdateFragsToAll (attacker.fClientNo, attacker.frags);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Finally, to this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		targ.frags = targ.frags - 1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again, paste this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+		msgUpdateFragsToAll (targ.fClientNo, targ.frags);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, we're done. Now you should have six of these calls to msgUpdateFragsToAll(). You probably noticed the pattern: whatever player got his frags changed was the player who was between the parentheses. You must get that right.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: if you did other tutorials, or added your own code, that affects player frags (like the Bomb Squad lesson), you must add a msgUpdateFragsToAll() call wherever you change the frags.)<P>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step four. Save and close client.qc. Now open up tutor.qc. We now have to connect the bot to the server, so to speak. Scroll down to create_bot(). Paste this subroutine right before it:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void(entity bot) put_bot_in_server =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float clientno;
+
+	clientno = clientNextAvailable();
+
+	if (clientno == -1)
+		{
+		bprint( "game not started correctly\nset 'maxplayers' to 16 and restart\n" );
+		return;
+		}
+
+	clientSetUsed( clientno );
+	bot.fClientNo = clientno;
+
+	bot.fPants = floor(random() * 14);
+	bot.fShirt = floor(random() * 14);
+
+	bot.colormap = clientno + 1;
+	msgUpdateNameToAll( bot.fClientNo, bot.netname );
+	msgUpdateColorsToAll( bot.fClientNo, bot.fShirt, bot.fPants );
+	msgUpdateFragsToAll( bot.fClientNo, bot.frags );
+	bprint(bot.netname);
+	bprint(" joins the game\n");
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hmm, okay, looks like dull technical stuff to me. To sum it up, we check to see if the bot can fit on the scoreboard. We give him a client number. And we give him a shirt and pants color.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this example, I make both his shirt and pants a random number from 0 to 13. You can change that if you wish. In fact, I know you're just itching to play around with his colors. You go boy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You'll also notice that if he doesn't fit on the board, or if the game is not started with the -listen 16 command line option, we do not connect him, and we leave the subroutine.<P>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step five. You will see these two lines:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bprint(bot.netname);
+	bprint(" enters the game\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Delete them. Since we now do this in put_bot_in_server(), we don't need them here. Next, scroll down into create_bot(). At the very end, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	put_bot_in_server(bot);
+
+	if (!bot.fClientNo)
+		remove(bot);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Looks harmless, right? It is. First we make a call to put_bot_in_server() for that bot. Then we check to see if he came out with a client number. If he has one, cool, he's good to go. If he does not have one, that means that put_bot_in_server() did not work because of the reasons described above. So if he did not fit into the game, we just remove him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Perhaps that's not the prettiest or most effective way of doing that. But it is likely the easiest. And you know me: one lazy-ass QuakeC coder. But hey, it works.<P>
+
+<P>&nbsp;<P><HR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last step. You may have noticed that we have called a few subroutines that, um, don't exist. Well, we need to make them exist. Thankfully, that's where the wise Mr. Kivlin comes in. He wrote a file called rankings.qc that has everything we need. <A HREF="rankings.txt">Download this text file and save it in your QuakeC directory as rankings.qc.</A> This lesson <B>will not</B> work without this file.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up progs.src, and before the line that reads "world.qc" add the line "rankings.qc" and save. I'm sure you're wondering what's it the file. A bunch of code. You can look at it if you want, but you don't need to know it. I have never examined it myself.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: remember to start Quake with the command line option -listen 16. Your bots will not connect if you do not use this.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That about wraps it up. Your bots will now come up on the scoreboard. This of course is extremely cool. After all, your bot can now hang with the big boys. Even the Reaperbots didn't come up on the board when they first came out. And maybe people won't even be able to tell the difference between your bot and the FrogBot.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Even the players and the bots are just entities in the entity list<BR>
+2. self.fPants and self.fShirt are the bot's colors<BR>
+3. We must use Alan Kivlin's updates each time we change somebody's frags<BR>
+4. Alan Kivlin is one damn good coder<P> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rankings code: Alan Kivlin<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

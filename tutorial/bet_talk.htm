@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0054)/tutorial/r_arena.htm --><html><head><TITLE>AI Tutorial</TITLE>
+<META content="text/html; charset=windows-1252" http-equiv=Content-Type>
+<META content="MSHTML 5.00.2614.3500" name=GENERATOR></HEAD>
+<BODY aLink=#dfbfff bgColor=#0080c0 link=#dfbfff text=#ffffff 
+vLink=#dfbfff>
+<FONT face="MS Sans Serif" size=3>
+<HR align=center SIZE=3 width="100%">
+<FONT face=Impact size=+3>
+<CENTER>Better Talking</CENTER></FONT>
+<HR align=center SIZE=3 width="100%">
+
+<P> Having been playing with Coffee's TutorBot for a few days now, I've started adding my own bits and pieces to it. The first thing I did was to improve the item collection and then modify that some more. The method I used is a combination of the best parts of the first two Item Collection tutorials on Coffee's site along with the bugfixes to get it working properly. Anyone should be able to work out what I did just from that information so no more clues there.
+
+<p>I like my opponents to have a little personality, so I added the Talking tutorial and then noticed that something was missing - no names! I like to be taunted by the guy who killed me, I like to curse him back, with names in the text.... Seemed like a good thing to add, so here's enough to get you going.
+
+<P>Let's begin at the beginning. We need to declare some stuff. Open up <STRONG>defs.qc</STRONG> and move to the bottom. Insert this:<BR>
+
+<PRE><FONT color=#dfbfff face=System>
+//TutorBot TALKING
+//RiEvEr
+// Add enemy name to taunts etc.
+float TALK_BORED	=0;
+float TALK_LOST	=1;
+float TALK_TAUNT	=2;
+float TALK_KILLED =3;
+float TALK_HELLO	=4;
+float TALK_MURDER =5;
+float TALK_SUICIDE =6;
+
+.string killed_by; // Who last blew this player away
+.string last_killed; // Name of the last player we killed
+//R
+</FONT>
+</PRE>
+
+<p>The bits in capitals are CONSTANTS. We use them to be a convenient way of getting the right number in the right place without needing 
+to remember what the numbers mean. If I type <STRONG>TALK_MURDER</STRONG> in the code now, it will be seen as if I had typed <STRONG>5</STRONG> instead. It just makes things more readable and less prone to silly errors.
+
+<p>The two "<STRONG>.string</STRONG>" declarations will hold the names of the two players for us. The dot before the declaration means it is a member of the entity, so if we have a "<STRONG>self</STRONG>" then we now also have a "<STRONG>self.killed_by</STRONG>".
+
+<p>Next, open up <STRONG>client.qc</STRONG> and move down to the sub ClientObituary(), and find the bit that looks like this:
+<BR>
+<PRE><FONT color=#dfbfff face=System>
+		if (attacker.classname == "teledeath2")
+		{
+			bprint ("Satan's power deflects ");
+			bprint (targ.netname);
+			bprint ("'s telefrag\n");
+
+			targ.frags = targ.frags - 1;
+			return;
+		}
+
+		if (attacker.classname == "player" || attacker.classname == "bot")//TutorBot
+		{
+</FONT>
+</PRE>
+and right after it add this:
+<BR>
+<PRE><FONT color=#dfbfff face=System>
+//TutorBot TALKING RiEvEr
+			targ.killed_by = attacker.netname;
+			attacker.last_killed = targ.netname;
+//TB T R
+</FONT></PRE>
+<p>This saves a copy of the names of the two combatants involved in the incident that caused the death of "targ" at the hands of "attacker". Next, slip down a bit in the same subroutine until you see this:<BR>
+<PRE><FONT color=#dfbfff face=System>
+				if (rnum == IT_LIGHTNING)
+				{
+					deathstring = " accepts ";
+					if (attacker.waterlevel > 1)
+						deathstring2 = "'s discharge\n";
+					else
+						deathstring2 = "'s shaft\n";
+				}
+				bprint (targ.netname);
+				bprint (deathstring);
+				bprint (attacker.netname);
+				bprint (deathstring2);
+</FONT>
+</PRE>and then immediately add this:<BR>
+<PRE><FONT color=#dfbfff face=System>
+//TutorBot TALKING RiEvEr
+				attacker.talk_subject = TALK_MURDER;
+				attacker.talk_time = time + 0.5;
+//TB T R
+</FONT>
+</PRE>See? That was simple. You can 
+save and close that file. Next, we want to open <STRONG>tutor.qc</STRONG> and go to the sub bot_talk(), find this section:<BR>
+<PRE><FONT color=#dfbfff face=System>
+	if (self.talk_subject == 4)
+		{
+		if (talk == 0) bprint(": whoa this server is fast...NOT!\n");
+		else if (talk == 1) bprint(": hey everybody\n");
+		else if (talk == 2) bprint(": step aside, i'm here\n");
+		else if (talk == 3) bprint(": it's time to die!\n");
+		else if (talk == 4) bprint(": dying time is here\n");
+		else bprint(": Hey, anybody seen RiEvEr?\n");
+		}
+</FONT>
+</PRE>and right after it add this:<BR>
+<PRE><FONT color=#dfbfff face=System>
+//TutorBot TALKING RiEvEr
+	if (self.talk_subject == TALK_MURDER)
+		{
+		if (talk == 0){	 bprint(": Gee, ");bprint(self.last_killed);bprint(", your mom must be so proud...\n");}
+		else if (talk == 1){	bprint(": ");bprint(self.last_killed);bprint(", you really need ta get out more.\n");}
+		else if (talk == 2){	bprint(": hey watch it, ");bprint(self.last_killed);bprint(" you nearly bled on my shoe!\n");}
+		else if (talk == 3){	bprint(": it's always the same, ");bprint(self.last_killed);bprint(", one guy wins, the other schmuck loses.\n");}
+		else if (talk == 4){	 bprint(": ");bprint(self.last_killed);bprint(", was that you?\n");}
+		else{	 bprint(": oh my god,  I killed ");bprint(self.last_killed);bprint("!\n");}
+		}
+//TB T R
+</FONT>
+</PRE>
+
+<p>And that's it! Just make sure you save and close those files and compile them. Now play, and be insulted.
+<p>If you've been paying attention, you'll notice that the facility exists to add names to the speech that the bot makes when it respawns after death (TALK_KILLED). You just need to use <STRONG>self.killed_by</STRONG>. Go away, improve it, have fun...
+ 
+<HR align=center SIZE=3 width="100%">
+
+<CENTER>
+<H3>What We Learned</H3></CENTER>
+1. The bot can store information about players<BR>
+2. It's easy to insult people by name.<BR>
+3. There are often simple solutions to seemingly tricky problems<BR>
+4. There is no number four.
+<P>
+<P>
+<P> 
+<P>
+<CENTER>&nbsp; 
+<P>
+<HR align=center SIZE=3 width="100%">
+Author: RiEvEr<BR>
+Questions: <A href="mailto:riever@planetquake.com">riever@planetquake.com</A><BR>
+AI chat on ICQ: 25649000<BR>
+<HR align=center SIZE=3 width="100%">
+</CENTER></FONT></BODY></HTML>
+
+

@@ -1,0 +1,190 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Homework Assignment No. 4 Answer</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We made it. This is it. The final assignment. The deathmatch mode Gambling Man. Kenny Rogers would be proud of you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The thing about this project was that it wasn't really that difficult. We wanted the player to be allowed to bet on his fights. The maximum wager was the number of frags (or money) he had. The minimum wager was one. If he won a fight, he would win the number of frags his wager was set to. If he lost the fight, he lost that many frags. Groovy, eh?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All we needed is a new variable to store the wager, player impulses to change it, and the win-or-lose code. Let's start with the new variable. Open up defs.qc and go all the way to the bottom. Add this there:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.float wager;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You know what this means. Save and close. Open up weapons.qc and glide on down to the routine ImpulseCommands(). There, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 200)
+		increase_wager();
+	if (self.impulse == 201)
+		decrease_wager();
+	if (self.impulse == 202)
+		minimum_wager();
+	if (self.impulse == 203)
+		maximum_wager();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This looks like English to me, so I hope it does not need explaining. The last two impulses I add as a convenience for the player: if he has 300 frags and an axe and runs into a bot with a rocket launcher, he won't want to press the button 300 times to drop his wager.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Before the routine ImpulseCommands(), we need to paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() increase_wager =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	self.wager = self.wager + 1;
+	if (self.wager > self.frags)
+		self.wager = self.frags;
+
+	bprint("wager set to ");
+	bprint(ftos(self.wager));
+	bprint("\n");
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again, I think this is simple code. We add one to his wager, but we make sure it's not too high. The "ftos" part means "float to string," which allows us to print a number value. After that, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() decrease_wager =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	self.wager = self.wager - 1;
+	if (self.wager < 1)
+		self.wager = 1;
+
+	bprint("wager set to ");
+	bprint(ftos(self.wager));
+	bprint("\n");
+};
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() minimum_wager =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	self.wager = 1;
+	bprint("wager set to ");
+	bprint(ftos(self.wager));
+	bprint("\n");
+};
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() maximum_wager =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	self.wager = self.frags;
+	bprint("wager set to ");
+	bprint(ftos(self.wager));
+	bprint("\n");
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you've been awake for the last 30 tutorials I've done, you don't need me to explain this. I do have a recommendation, though. To get the full fun out of Gambling Man, during the game I suggest you type these four lines into the Quake console:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+bind f1 "impulse 200"
+bind f2 "impulse 201"
+bind f3 "impulse 202"
+bind f4 "impulse 203"
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With these key bindings, you can quickly change your wager. For instance, if you pick up a lightning gun, you can hit F4 to maximize your bet. Hehe.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We only have one and a half more things to do. Open client.qc and scroll to ClientObituary(). Of course, it looks like this:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+===========
+ClientObituary
+
+called when a player dies
+============
+*/
+void(entity targ, entity attacker) ClientObituary =
+{
+	local	float rnum;
+	local	string deathstring, deathstring2;
+	rnum = random();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And of course, after that, you want to add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 8 && attacker.classname == "player")
+		{
+		attacker.frags = attacker.frags + attacker.wager;
+		bprint(attacker.netname);
+		bprint(" won ");
+		bprint(ftos(attacker.wager));
+		bprint(" frags!\n");
+		return;
+		}
+	if (cvar("deathmatch") == 8 && attacker.owner.classname == "player")
+		{
+		attacker.owner.frags = attacker.owner.frags + attacker.owner.wager;
+		bprint(attacker.owner.netname);
+		bprint(" won ");
+		bprint(ftos(attacker.owner.wager));
+		bprint(" frags!\n");
+		return;
+		}
+	if (cvar("deathmatch") == 8 && targ.classname == "player")
+		{
+		targ.frags = targ.frags - targ.wager;
+		bprint(targ.netname);
+		bprint(" lost ");
+		bprint(ftos(targ.wager));
+		bprint(" frags\n");
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I chose the long simple way instead of the short complex way. Of course, we need to see if the deathmatch mode is set. Then we need to check to see if the player made a kill or got killed. Then we either add his wager to his frags, or subtract it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then naturally we leave the subroutine if any of that is true. Nothing new here. You understand it. Trust me. The other half thing to do is this: go up to PutClientInServer(). At the very end of that subroutine, add this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	self.wager = 1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The player is born with his wager set to one. Save, close, and compile.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And there you have the Gambling Man Quake deathmatch mode. Combined with the "buy your weapons" tutorial, this game can be loads of fun. I enjoy it a lot. Betting can be addictive, you know. Your frags can go up exponentially, or go down instantly. Now all you need is to play a cash register sound when you win money, and you're all set.<BR>
+
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

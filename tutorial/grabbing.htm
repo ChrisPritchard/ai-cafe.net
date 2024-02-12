@@ -1,0 +1,200 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Improved Item Grabbing</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In his unmodified state, the Tutor Bot does not actually pick up items. That is, he does not trigger their touch subroutines to get them. What he does is like grabbing: he sees if he close to his goalentity, then just turns it invisible and makes a sound. He doesn't even earn that item.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Shortly after the waypoint lesson, I wrote a tutorial on how to make the bot actually pick up items as a player does. Well, not only was that tut hard to understand, it resulted in a bug anyway (the bot would try to get items that he couldn't pick up).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You might have fixed this, and you may have improved on it. Great. But for the rest of you who had trouble with it and yet still want to make your bot more realistic, this lesson is for you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(So, if you did that touch-item tutorial, you should not do this one. The code for each are not compatible. You would have to start over if you wanted to implement this method.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For the sake of simplicity, we will return to the grabbing technique. But for the sake of realism, we will give the bot the item he is grabbing.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This lesson involves two fairly long subroutines but is strangely easy. Of course, those subs are bot_look_for_items() and bot_grab_items(), which I hope are self-explanatory. Near the top of tutor.qc you will find bot_search_for_items(). You can either rename that to anything else, or delete. Then in its place, insert this:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+float() bot_bestweapon;
+void() bot_set_currentammo;
+
+
+// ------------------------------------------------
+void() bot_search_for_items =
+// ------------------------------------------------
+{
+local entity item;
+
+// he gives up on that item and marks it to avoid it for a while
+	if (time > self.search_time && self.goalentity != world)
+		{
+		self.goalentity.search_time = time + 30;
+		self.goalentity = world;
+		self.talk_subject = 1;
+		self.talk_time = time + 0.1;
+		}
+
+	if (self.goalentity != world)
+		return;
+
+// checks a radius around him for items
+	item = findradius(self.origin, 1500);
+
+	while(item)
+		{
+		if ( (item.classname == "ammo_shells" ||
+			item.classname == "ammo_nails" ||
+			item.classname == "ammo_rockets" ||
+			item.classname == "ammo_cells" ||
+			item.classname == "weapon_supershotgun" ||
+			item.classname == "weapon_nailgun" ||
+			item.classname == "weapon_supernailgun" ||
+			item.classname == "weapon_grenadelauncher" ||
+			item.classname == "weapon_rocketlauncher" ||
+			item.classname == "item_health")
+			&& visible(item) && item.model != string_null
+			&& time > item.search_time)
+				{
+				self.search_time = time + 15;
+				self.goalentity = item;
+				}
+		item = item.chain;
+		}
+
+	self.weapon = bot_bestweapon();
+	bot_set_currentammo();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Long yes, complicated no. There is only one difference between this and the old one. In the first, the bot just looks for entity marked with a FL_ITEM flag. In this one, he checks their classnames. Now, he will only try to get items that he can pick up and use.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For better or worse, this is still limited. I have not included the power-ups or the armor; these would be too tedious to explain in a tutorial. I think you can discover them for yourselves, though. I have faith in you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notes: the placement of the parentheses here is crucial. Notice that there is one group of parentheses around the classname section, and one around the whole if block. That's because only one of the classnames has to be true, but all of the other things have to be true.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, the item can be a "weapon_supershotgun" <B>OR</B> a "weapon_lightning," but that item has to be visible <B>AND</B> not null <B>AND</B> not marked to avoid. Say that three times fast.<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, next we move onto bot_grab_items(). Rename that or delete it, and replace it with this new one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_grab_items =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+// sees if he's close enough to pick that item up
+	if (self.goalentity == world)
+		return;
+	if (vlen(self.origin - self.goalentity.origin) > 70)
+		return;
+
+// bot picks up ammo here
+	if (self.goalentity.classname == "item_shells")
+		self.ammo_shells = self.ammo_shells + 30;
+	if (self.goalentity.classname == "item_spikes")
+		self.ammo_nails = self.ammo_nails + 50;
+	if (self.goalentity.classname == "item_rockets")
+		self.ammo_rockets = self.ammo_rockets + 5;
+	if (self.goalentity.classname == "item_cells")
+		self.ammo_cells = self.ammo_cells + 40;
+
+// bot gets weapon here
+	if (self.goalentity.classname == "weapon_supershotgun")
+		{
+		self.ammo_shells = self.ammo_shells + 30;
+		if (!(other.items & IT_SUPER_SHOTGUN))
+			self.items = self.items | IT_SUPER_SHOTGUN;
+		}
+	if (self.goalentity.classname == "weapon_nailgun")
+		{
+		self.ammo_nails = self.ammo_nails + 50;
+		if (!(other.items & IT_NAILGUN))
+			self.items = self.items | IT_NAILGUN;
+		}
+	if (self.goalentity.classname == "weapon_supernailgun")
+		{
+		self.ammo_nails = self.ammo_nails + 50;
+		if (!(other.items & IT_SUPER_NAILGUN))
+			self.items = self.items | IT_SUPER_NAILGUN;
+		}
+	if (self.goalentity.classname == "weapon_grenadelauncher")
+		{
+		self.ammo_rockets = self.ammo_rockets + 10;
+		if (!(other.items & IT_GRENADE_LAUNCHER))
+			self.items = self.items | IT_GRENADE_LAUNCHER;
+		}
+	if (self.goalentity.classname == "weapon_rocketlauncher")
+		{
+		self.ammo_rockets = self.ammo_rockets + 5;
+		if (!(other.items & IT_ROCKET_LAUNCHER))
+			self.items = self.items | IT_ROCKET_LAUNCHER;
+		}
+	if (self.goalentity.classname == "weapon_lightning")
+		{
+		self.ammo_cells = self.ammo_cells + 40;
+		if (!(other.items & IT_LIGHTNING))
+			self.items = self.items | IT_LIGHTNING;
+		}
+
+// bot gets healed here
+	if (self.goalentity.classname == "item_health")
+		{
+		self.health = self.health + self.goalentity.healamount;
+		if (self.health > 250)
+			self.health = 250;
+		}
+
+// reseting his goal entity here
+	self.goalentity.search_time = time + 35;
+	self.goalentity.solid = SOLID_NOT;
+	self.goalentity.model = string_null;
+	self.goalentity.nextthink = time + 20;
+	self.goalentity.think = SUB_regen;
+
+// making the appropriate sound here
+	if (self.goalentity.healamount)
+		sound (self, CHAN_ITEM, "items/health1.wav", 1, ATTN_NORM);
+	else if (self.goalentity.weapon)
+		sound (self, CHAN_ITEM, "weapons/pkup.wav", 1, ATTN_NORM);
+	else
+		sound(self, CHAN_ITEM, "items/armor1.wav", 1, ATTN_NORM);
+
+// reseting himself here
+	self.goalentity = world;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Again, it's long, but the concept is the same: if he has a goal entity and he is close enough, he's going to look at what it is, give it to himself, turn it invisible, tell it to respawn later, make a sound, and clear his goal entity.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I believe that if you look at each line of code, you will see what it does; you don't want to hear me explain all that, do ya? Really, it's not hard. It says what it does, and it does what it says.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Perhaps the only part that is not straight forward is the weapon flags. Basically, if the bot owns that particular gun, we do not give it to him again. I think that would mess up his self.items variable, which relates to that icky bitwise math stuff. Yuck.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Feel free to tweak this routine. That is, if you want the bot to get more shells when he picks up a super shotgun. Or if you want to give him more or less health, you can do that to.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, you may have a bit of reading to do, but that's the end of the tutorial. I like this method; it's both simplistic yet more like a player. And it doesn't have any bugs.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. The bot always knows the classname of his goalentity<BR>
+2. Be careful with flags and bitwise variables<BR>
+3. Also be careful with your || (or) and your && (and) conditions<BR>
+4. The bot can look for an entity with any classname<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

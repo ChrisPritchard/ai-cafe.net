@@ -1,0 +1,139 @@
+<html>
+<head><TITLE>AI Tutorial</TITLE>
+<META content="text/html; charset=windows-1252" http-equiv=Content-Type>
+<META content="MSHTML 5.00.2614.3500" name=GENERATOR></HEAD>
+<BODY aLink=#dfbfff bgColor=#0080c0 link=#dfbfff text=#ffffff vLink=#dfbfff>
+<FONT face="MS Sans Serif" size=3>
+<HR align=center SIZE=3 width="100%">
+
+<FONT face=Impact size=+3>
+<CENTER>Riding Platforms</CENTER></FONT>
+<HR align=center SIZE=3 width="100%">
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you now know, id software put up "Players Only" signs all over the place. In other words, entities not class-named "player" cannot use doors, buttons, and such. Well, we're going to undo some of the nefarious id's work. A very short but effective lesson here - how to get your bots using platforms, lifts, etc. Open up <STRONG>plats.qc</STRONG> and find this:<BR>
+
+<PRE><FONT color=#dfbfff face=System>
+
+void() plat_center_touch =
+{
+	if (other.classname != "player")
+		return;
+		
+</FONT>
+</PRE>
+<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and change it to:<BR>
+
+<PRE>
+<FONT color=#dfbfff face=System>
+void() plat_center_touch =
+{
+	if (other.classname != "player" && other.classname != "bot") //TutorBot PLATS
+		return;
+		
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Does this look familiar - yep, it's the old "Player Only" sign on the washroom door again. There's just one more to do and that is where you see:<BR>
+
+<PRE>
+<FONT color=#dfbfff face=System>
+void() plat_outside_touch =
+{
+	if (other.classname != "player")
+		return;
+</FONT>
+</PRE>
+<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and change it to this:<BR>
+
+<PRE>
+<FONT color=#dfbfff face=System>
+void() plat_outside_touch =
+{
+	if (other.classname != "player" && other.classname != "bot") //TutorBot PLATS
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See? That was simple. You can save and close that file and compile away to your hearts content. Or, if you want to make the bots pause when they get on the lift, you can do the following steps.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We will be working in the same two subroutines. First, go back to plat_center_touch(). Somewhere around the middle, squeeze in this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname == "bot" && time > other.pausetime + 5)
+		{
+		other.pausetime = time + 5;
+		other.think = bot_wait1;
+		other.nextthink = time + 0.1;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The platform actually has some AI in it right here. You see, if the bot has not paused recently, the platform actually tells the little guy to execute his waiting sequence. If we didn't check the bot's pausetime, he would loop in this sequence, since he'd always be touching the lift.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now go back to plat_outside_touch(). Again, somewheres in the middle, add this again:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other.classname == "bot" && time > other.pausetime + 5)
+		{
+		other.pausetime = time + 5;
+		other.think = bot_wait1;
+		other.nextthink = time + 0.1;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Save and close that file. Since plats.qc comes before tutor.qc in out progs.src file, we will be calling bot_wait1() before we write it. That is a no-no. We must define it first. Thus, open up defs.qc, and at the very, very end, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() bot_wait1;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's done. Finally, open up tutor.qc and slip down to the end of your animation scenes. There, paste this new waiting sequence:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() bot_wait1		=[	$stand1,	bot_wait2	] {};
+void() bot_wait2		=[	$stand2,	bot_wait3	] {};
+void() bot_wait3		=[	$stand3,	bot_wait4	] {};
+void() bot_wait4		=[	$stand4,	bot_wait5	] {};
+void() bot_wait5		=[	$stand5,	bot_wait6	] {};
+void() bot_wait6		=[	$stand1,	bot_wait7	] {};
+void() bot_wait7		=[	$stand2,	bot_wait8	] {};
+void() bot_wait8		=[	$stand3,	bot_wait9	] {};
+void() bot_wait9		=[	$stand4,	bot_wait10	] {};
+void() bot_wait10		=[	$stand5,	bot_wait10	] {if (self.enemy == world) bot_walk1() else bot_run1();};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now he'll stand for one second when he gets on a lift. If he has an enemy, he'll run at the end of this; if not, he'll walk. Feel free to tweak, add, or delete. That's today's lesson.<P>
+
+<P>&nbsp;<P>&nbsp;<P>
+<HR align=center SIZE=3 width="100%">
+
+<CENTER>
+<H3>What We Learned</H3></CENTER>
+1. The Quake engine likes reserving things for Players<BR>
+2. We can tell it Bots are allowed in too<BR>
+3. Not everything has to be complicated<BR>
+4. RiEvEr forgets that he has to write this bit at the end...<P>
+
+<CENTER>&nbsp; 
+<P>
+<HR align=center SIZE=3 width="100%">
+Author: RiEvEr<BR>
+Questions: <A href="mailto:riever@planetquake.com">riever@planetquake.com</A><BR>
+AI chat on ICQ: 25649000<BR>
+<HR align=center SIZE=3 width="100%">
+</CENTER></FONT>
+
+</BODY>
+</HTML>
+
+

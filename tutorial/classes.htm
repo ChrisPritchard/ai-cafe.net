@@ -1,0 +1,207 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Bot Classes</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your bot ain't nothin if he ain't got no class.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, so I'm not as slick as I want to sound: what I wanted to say is that your bot could be much cooler if he had a class. You know, player classes, like sniper, gansta, mage, whatever. Today, we're going to learn how to implement bot classes. Or die trying.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The last I heard, Quake 3: Arena, a sure-to-be-orgasmic bot game, included player classes. I'm sure they will resemble the standard, stereotypical classes of heavy/slow, medium/middle, and light/fast guy. I think most game characters, like a wizard or a marine, fall into one of these categories so, by God, we'll use these.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We could deal with dozens of player characteristics, but we will settle for these: health, speed, skin, weapon, and attack style. I think with these that we can create some pretty cool bot personalities. If you don't agree with me, you can bite me.<P>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: if you go further, know that this tutorial requires you to have done the attack styles and bot speed lessons. Another note: teamplay will be taken out in this lesson, so if you use teamplay, read through it first. Also, this lesson assumes you have a player.mdl with three skins, the first representing the heavy guy, second the medium guy, and third the light guy. Find skins at <A HREF="http://minion.planetquake.gamespy.com/tutorial/ftp.cdrom.com/pub/quake/graphics/skin_textures/">ftp.cdrom.com/pub/quake/graphics/skin_textures/</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, we need a new variable to store our bot's class. Open up defs.qc and at the very bottom, put this strangely named float:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.float botclass;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With that done, we can do most of our class work in one simple subroutine. With further ado, here it be:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void(entity his) apply_bot_class =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	// heavy/slow guy
+	if (his.botclass == 0)
+		{
+		his.health = 125;
+		his.max_health = 125;
+		his.speed = 50;
+		his.skin = 0;
+		his.items = his.items & IT_ROCKET_LAUNCHER;
+		his.weapon = IT_ROCKET_LAUNCHER;
+		his.currentammo = his.ammo_rockets = 20;
+		his.attack_state = 1;
+		}
+
+	// medium/middle guy
+	if (his.botclass == 1)
+		{
+		his.health = 100;
+		his.max_health = 100;
+		his.speed = 250;
+		his.skin = 1;
+		his.items = his.items & IT_SUPER_SHOTGUN;
+		his.weapon = IT_SUPER_SHOTGUN;
+		his.currentammo = his.ammo_shells = 50;
+		his.attack_state = 2;
+		}
+
+	// light/fast guy
+	if (his.botclass == 2)
+		{
+		his.health = 75;
+		his.max_health = 75;
+		his.speed = 500;
+		his.skin = 2;
+		his.items = his.items & IT_SUPER_NAILGUN;
+		his.weapon = IT_SUPER_NAILGUN;
+		his.currentammo = his.ammo_nails = 100;
+		his.attack_state = 3;
+		}
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If this was any simpler, it would bore you to sleep. As you can see, all we are doing is apply certain values to his traits depending on his class. It's black and white. It's a no-brainer. Place this code before the routine bot_name() near the end of tutor.qc.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The heavy guy may have lots of health and a big gun, but he won't move around much, whereas the light dude will run fast and strafe well. These values can be tweaked forever, but more on that later.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, now we have to call this routine. Naturally, these values will be set when he is born and reset when he is respawned. Let's start with the toughie, the routine create_bot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you're awake, you probably have guessed that we will need three different impulses to create each bot class. We will accept these in ImpulseCommands() and we will pass them to create_bot() as parameters. Thus, we much change the first line, which now should look something like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void(float teem) create_bot =
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have one parameter there now, called teem, but we need to add one. Change that line to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void(float teem, float which) create_bot =
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, now go down to the line that reads give_random_weapon(bot); and delete it. In its place, put this code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.botclass = which;
+	apply_bot_class(bot);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We set our bot's class, and then change his characteristics relevant to that class. Easy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, now do me a favor. If you have any other references to the bot's health, speed, skin, or attack state in your create_bot() routine, please delete them. Obviously, we set those in our new routine and that's where we want to set them.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, we slide up to respawn_bot(). At the very end, add this:
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	apply_bot_class(self);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is a bit different because the bot is now the self entity (when you create a bot, the player is the self entity). Remember, he retains his self.botclass even when he dies.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's move onto the different attack styles. Let's say that the heavy dude, like the heavy weapons guy in Team Fortress, will not move at all when he shoots. We want to work on the routine bot_strafe(). Yours may look radically different by now, but for the sake of this tutorial, it should now look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_strafe =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	bot_face();
+	bot_check_ammo();
+
+	if (self.botclass == 0)
+		return;
+	if (self.botclass == 1)
+		back_up();
+	if (self.botclass == 2)
+		bot_run_slide();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This might be the neatest part of our bot class system. Like the Heavy Weapons Guy in Team Fortress, our heavy bot will not move while he fires. Our medium guy will move backwards, while our light dude will strafe. Thus, the player will be able to see his personality in action.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I hope these attack strategies represent the classes. You may change them if you have different ideas. For instance, you may think the light/fast guy is more afraid and therefore would use run_for_cover(). The point is that they each fight in a noticeably distinct way. Also, you can use the Tutor Bot's circle_enemy() or circle_strafe() patterns. You can have a lot of fun with this.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now let's open up the file weapons.qc. Near the top, you should find a line looking like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void(float teem) create_bot;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Change that line to this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void(float teem, float which) create_bot;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, scroll all the way down to the routine ImpulseCommands(). You will see some old crap like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 100)
+		create_bot(0);
+	if (self.impulse == 101)
+		create_bot(1);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What we will do is change that to this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 100)
+		create_bot(0, 0);
+	if (self.impulse == 101)
+		create_bot(0, 1);
+	if (self.impulse == 102)
+		create_bot(0, 2);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;O how I enjoy simple stuff. The player can now type impulse 100 to create a heavy bot, impulse 101 for a medium bot, or impulse 102 for a light bot. You will notice that our first parameter, the teamplay value, is always zero, so its not used.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I kept the team float in there just in case you want to utilize it in the future. I don't use it in this tutorial because most Quake player skins don't show team colors, and therefore a heavy/slow guy would look the same on either team. If you want to implement teamplay, you'll have to tie up my loose ends later.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hmm, let's see now. I think this is what they call the end. Yup, we now have a bot class system. What you say? It's too simple? It's not enough? Damn you man, you've not been paying attention. Check it out:<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Our heavy/fast bot now has his own skin, so he actually looks like a heavy soldier. He owns his own big gun. He walks slowly, like a big guy would. And because he's strong, bold, and heavily armed, he figures he can just stand and shoot to take you out. Sounds like a character to me.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Obviously, this class system can be stretched to infinity. The characters could have their own sounds. They could have their own dialog. They could have their own skills, like ducking for the light/fast guy. They could have anything that you can think of.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This lesson really shows the strength of the Tutor Bot. For instance, his speed can be adjusted individually, and he can utilize distinct combat plans. Few or no other bots have the same capabilities. I hope you try to improve this class system.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So now you're ready to begin that Team Fortress Bots project you've been considering, right?<BR>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Every detail matters to a bot<BR>
+2. We can pass different values to subroutines as parameters<BR>
+3. When calling a routine, always remember which entity is the "self"<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+</HTML>

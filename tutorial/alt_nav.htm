@@ -1,0 +1,107 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Alternate Navigation</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can never know too much artificial intelligence. Especially when it deals with AI's thorniest subset, navigation. So for this lesson we will look at an alternative method of map exploration. We can compare and contrast it with my coffee_move() subroutine, and perhaps learn more just by viewing the problem from a different angle.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All methods of navigation we have studied before stem from movetogoal() and walkmove(), commands embedded into QuakeC by id software. These are good commands, I think, as long as we put them to good use.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today's method will be based on walkmove(). As you will remember, this command merely moves a bot forward, and does not navigate itself like movetogoal() does. Therefore, if a bot used it over and over, he would probably walk into a wall and keep walking into that wall.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The benefits of walkmove(), however, are that it is faster and more direct than movetogoal(). If you have a specific objective for your bot, say, following a teammate, walkmove() will allow him to keep up faster.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I will tell you now: this new method we will create is not as good as coffee_move(), and therefore you don't have to complete this tutorial. But there is a reason to, which we will discuss later.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Without further ado, we can get onto the new method. First we need to declare a new variable for the bot, so near the beginning of tutor.qc, add this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.vector last_org;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A vector is a location, and last_org is short for last origin. Thus this variable will store the last location where the bot stood. Next we want to paste this new routine before the routine bot_walk():<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_roam =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+	if (walkmove(self.angles_y, 20) == FALSE)
+		self.angles_y = self.angles_y - 15;
+
+	if (self.origin == self.last_org && random() < 0.1)
+		bot_jump1();
+
+	self.last_org = self.origin;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now the bot has a new way to get around. As you can see, it's fairly simple. You may even understand it already. If not, here's an English explanation:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"I will try to walk in the direction I'm facing. If I can't, I will turn 15 degrees to the left. If I am standing where I stood a second ago --and if I feel like it-- I will jump to get unstuck. Then I will store the location where I'm standing now."<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There you have it. He walks until he hits a wall, and then turns. If he gets stuck in the same place, he will try jumping out of that spot. I used the random() command so he doesn't jump all the time. You can edit that value if you wish.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This navigation method may look familiar to you. Good. It's basically the technique that the popular BGBot uses. Hey, either you're old school or you're no school.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We still have to tell the bot to call this routine. Go into bot_walk(), where you'll see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.goalentity != world)
+		movetogoal(20);
+		else coffee_move();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We want to change coffee_move() to bot_roam(), so that bit will look like such:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.goalentity != world)
+		movetogoal(20);
+		else bot_roam();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's it, then. Lesson's over.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You're likely wondering why we would want to learn an inferior nav technique. As I mentioned before, you may have learned something just by seeing it. Or maybe you'll play with it and edit it and come up with something better.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There is another reason, though, a good one. When real people play deathmatch, everyone plays differently. Some may run around a lot, some may not. Some may know the level by heart, others may not.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Similarly, maybe you are trying to make each of your bots act differently. Perhaps now one of your bots can use coffee_move() and another one can use bot_roam(). Perhaps the bots at higher skill levels know the map better. Your code could look like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.goalentity != world)
+		movetogoal(20);
+		else if (self.skill_level == 1)
+			bot_roam();
+			else coffee_move();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's just an idea. You can use it as you wish, or you could choose to ignore this tutorial altogether. Myself, I believe this method is yet another step on the journey towards giving your bots personality.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Walkmove() is faster than movetogoal()<BR>
+2. Movetogoal(), however, navigates for itself<BR> 
+3. Both of these will avoid gaps and ledges<BR>
+4. A bot can remember where he was standing last<BR>
+5. There are plenty of nav methods stemming just from walkmove() and movetogoal()<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

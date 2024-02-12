@@ -1,0 +1,152 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Fast Monsters</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Today we are going to something that we haven't done in many months: improve the monster AI.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I know, that sounds weird. Some of you bot developers many think it's a travesty. But I realized that there are many Quake 1 conversions out there that could use improved creatures, and it's just so damn easy to improve them.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Indeed, I actually had fun writing this code, and I was quite amused to watch the id monsters with these changes. I think you'll enjoy it too. It sure puts id software to shame. What we will do is make the monsters run and strafe very quickly during battle.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up ai.qc, the monster brain file. Down at the bottom, you will find a subroutine called ai_run(). This is where the creature fights his enemy. At the end, you will see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.attack_state == AS_SLIDING)
+	{
+		ai_run_slide ();
+		return;
+	}
+		
+// head straight in
+	movetogoal (dist);		// done in C code...
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nnn-kay. This movetogoal() statement makes the beast walk toward his self.goalentity. It usually zigzags, so it is slow. We want to quicken it up. So, after that, add the following:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * 200;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Those of you who have done my bot lessons will recognize this; it's my hybrid velocity method. Anyway, the makevectors() finds out what direction he is facing. The second line seperates him from the floor. And the third line will propel him forward at a speed of 200 Quake units. Looks simple, eh? Just wait until you see him dash.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now the monsters will chase you quickly. By the way, you can change the 200 to something faster or slower, depending on your tastes.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Save and close that file. Okay, now that was cool and easy because every monster uses ai_run() for running. As for attacking, each beast has his own animation sequences, and they don't call ai_run() during those. Indeed, they don't really call any AI routines. In other words, they don't call a central AI function.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But they do call ai_face(), however.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up fight.qc, a file with combat AI helper routines. Scrolling down, you will come to ai_face(), which looks like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+=============
+ai_face
+
+Stay facing the enemy
+=============
+*/
+void() ai_face =
+{
+	self.ideal_yaw = vectoyaw(self.enemy.origin - self.origin);
+	ChangeYaw ();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that code, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	monster_run_slide();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Kewl. Since ai_face() is called the most often, it is a good place to call this new monster strafing routine. Now all we have to do is write it. Before ai_face(), stick this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// --------------------------------
+void() monster_run_slide =
+// --------------------------------
+{
+	local float	ofs;
+	
+// this is a cool strafing routine
+
+	if (self.lefty)
+		ofs = 90;
+	else
+		ofs = -90;
+
+	if (walkmove (self.ideal_yaw + ofs, 20))
+		{
+		if (ofs == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * 200;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * -200;
+			}
+		return;
+		}
+
+	self.lefty = 1 - self.lefty;
+
+	walkmove (self.ideal_yaw - ofs, 20);
+
+		if (ofs == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * 200;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * -200;
+			}
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, this is the id software routine ai_run_slide() mixed with my own velocity code. You see, whether a monster is strafing left or right is stored in self.lefty. Depending on what that value is, the float ofs is set to 90 or -90, which when subtracted from self.ideal_yaw, will make him slide left or right.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All we do here is check to see what direction he will be moving in, and then "push" him 200 speed units (remebering that there is no v_left, so we use negative v_right). I hate math, so if I can understand all that, you can too.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remember, if you tweak the value 200, make sure you change it in each reference in this tutorial, since you want him to move at a consistant speed.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If we were in Spain, we would say this is "el fin," the end. Our monsters will now chase the player quickly and strafe while he is attacking. Not bad for 10 minutes work.<P>
+
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. makevectors() will create the value v_right<BR>
+2. we can control entity (or monster) velocity<BR>
+3. it's good to have central AI routines called by all animation frames<BR> 
+4. apparently, id software was uninterested in any of this<P>
+
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

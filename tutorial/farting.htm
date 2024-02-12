@@ -1,0 +1,141 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Farting</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My bot stinks.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oh, he's a great adversary. He stinks because he busts ass. He breaks wind. He rips one. He farts. And now your bot can too, with the help of this simple, silly tutorial.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let me tell you, bots can really let loose. Their farts are so loud that you can hear them a mile away. They are so nasty that they cause a red gas cloud. And they smell so horrid that they even hurt their victims.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright. First you need to download the <A HREF="fart.zip">fart sound</A>. Place fart.wav in a sound subdirectory under your bot game folder, like:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+c:\quake\yourbot\sound
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then open up weapons.qc. Near the top you will find the routine W_Precache(). In it, add this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	precache_sound("fart.wav");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up tutor.qc. Somewhere near the top, we will create a new subroutine, the one for our farting. Paste this somewhere:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() rip_a_fart =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity fart;
+
+	fart = spawn();
+	setorigin(fart, self.origin - '0 0 10');
+	fart.attack_finished = time + 10;
+	fart.owner = self;
+	fart.think = fart_think;
+	fart.nextthink = time + 0.1;
+	self.attack_finished = time + 2;
+	sound (self, CHAN_VOICE, "fart.wav", 1, ATTN_NONE);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Interesting; the bot's fart is actually a new entity. The .attack_finished is how long it will last. We set it to think the routine fart_think(). Then we make the fart sound.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But where is the red cloud? We need to create a second new subroutine. Paste the following before the last one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() fart_think =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity victim;
+
+	victim = findradius(self.origin, 400);
+	while (victim)
+		{
+		if ((victim.classname == "player" || victim.classname == "bot") && victim.health > 0 && victim != self.owner)
+			T_Damage(victim, self.owner, self.owner, 25);
+		victim = victim.chain;
+		}
+
+	WriteByte (MSG_BROADCAST, SVC_TEMPENTITY);
+	WriteByte (MSG_BROADCAST, TE_LAVASPLASH);
+	WriteCoord (MSG_BROADCAST, self.origin_x);
+	WriteCoord (MSG_BROADCAST, self.origin_y);
+	WriteCoord (MSG_BROADCAST, self.origin_z);
+
+	if (time > self.attack_finished)
+		remove(self);
+		else self.nextthink = time + 1;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I love this stuff. Using QuakeC to reproduce bodily functions. Hehe.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can observe, programming a fart is quite easy. The fart checks a radius around it, and if it finds any people, it hurts them. Then it makes the red cloud (taken from Cthon). If its time has run out, it removes itself. If not, it thinks again one second from now.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Those findradius ... while ... chain loops are quite handy. You can look for any type of entity around any other entity, including players and bots. Just don't forget the chain part, as I sometimes do.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We could have used a touch function for the fart. For instance, when someone touches the cloud, they get hurt. But that happens continuously; we wanted it to happen only once a second. Plus, we wanted to re-execute the cloud special effect.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next, let us slip down to that beautiful bot_run() routine. There you will spy these two lines of code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (visible(self.enemy) && time > self.attack_finished)
+		self.th_missile();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is where the bot fires. When he is close to his adversary, he will decide to fart instead of shooting. Before those lines, add these:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time > self.attack_finished && vlen(self.enemy.origin - self.origin) < 80)
+		{
+		rip_a_fart();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No problem. I think that explains itself. If not, tough shit, I already explained it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: you can allow the player to fart as well, using the very same subroutine and an impulse.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Once more, the Tutor Bot proves that he is unique. No other bot runs for cover. No other bot plays Bomb Squad. And certainly no other bot breaks wind.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It's all over but the, um, farting. Your trusty deathmatch oppoenent can bust ass with the best of em. Just don't get to close to him on chili night.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Look through all QuakeC files for ideas and effects<BR>
+2. We use findradius ... while ... chain loops to look for entities<BR>
+3. Entities can take many forms<BR>
+4. You don't need a rectum to rip ass<BR> 
+5. Coffee is anal-retentive<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+</HTML>

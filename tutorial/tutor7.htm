@@ -1,0 +1,138 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Creating Your First QuakeC Mod</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+	
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Welcome to QuakeC Remedial School. You are here because you couldn't quite get my other tutorials. Or because you have never done any QuakeC editing. Or because you were afraid of learning something new. Or because you were caught smoking in the bathroom.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No matter, you are here now, and I'm gonna learn you real good. In this lesson, you will discover how to make your first Quake modification. Remember, though, if you use the knowledge you gain here to make a game better than mine, I'll shoot you.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Let me start with a quick -- very quick -- description of our subject matter: QuakeC is a programming language divided into about a dozen files, each of which are divided up into subroutines, each of which perform different actions. Period.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. We have to download this source code first. You can get it <A HREF="../files/qc106.zip">right here.</A><P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Next, create yourself a working directory like C:\WORK\QUAKEC. Unzip the QuakeC source into this area.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. We now need a compiler. Download ProQcc <A HREF="../files/proqc152.zip">from here.</A><P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5. Unzip this program into any other directory. Then put the file PROQCC.EXE into your QuakeC work directory.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6. Now we have to create a Quake subdirectory for our mod itself. Try something like C:\QUAKE\NEW.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7. QuakeC can be edited in any text editor. So, open up Windows Wordpad, edit.com, or any other editor you may have.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8. Within your editor, open up the QuakeC file named PROGS.SRC. This is your source file, where all the QuakeC files in your mod are listed. The first line looks like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	../progs.dat
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is where the compiler will place our PROGS.DAT file. Let's change it to this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	/quake/new/progs.dat
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where new is our Quake subdirectory. Save that.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9. Whew. Now we are ready for the editing itself. From your text editor, open the file called CLIENT.QC. Scroll down to the part which looks like so:
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+================
+PlayerPostThink
+
+Called every frame after physics are run
+================
+*/
+void() PlayerPostThink =
+{
+	local	float	mspeed, aspeed;
+	local	float	r;
+
+	if (self.view_ofs == '0 0 0')
+		return;		// intermission or finale
+	if (self.deadflag)
+		return;
+		
+// do weapon stuff
+
+	W_WeaponFrame ();
+
+// check to see if player landed and play landing sound	
+	if ((self.jump_flag < -300) && (self.flags & FL_ONGROUND) && (self.health > 0))
+	{
+		if (self.watertype == CONTENT_WATER)
+			sound (self, CHAN_BODY, "player/h2ojump.wav", 1, ATTN_NORM);
+		else if (self.jump_flag < -650)
+		{
+			T_Damage (self, world, world, 5); 
+			sound (self, CHAN_VOICE, "player/land2.wav", 1, ATTN_NORM);
+			self.deathtype = "falling";
+		}
+		else
+			sound (self, CHAN_VOICE, "player/land.wav", 1, ATTN_NORM);
+
+		self.jump_flag = 0;
+	}
+
+	if (!(self.flags & FL_ONGROUND))
+		self.jump_flag = self.velocity_z;
+
+	CheckPowerups ();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you can tell from its name, this subroutine is executed after the player thinks (which really means after each of his actions). In other words, it is executed almost continuously.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10. At the end but before the braket and semi-colon, we will add these lines:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time < 5)
+		centerprint(self, "This is my first Quake mod!\n");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, Quake has an internal game timer, the one you can see at the lower left corner. This is recorded in the variable called "time."<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;And so for the first 5 seconds, this modification will print a message in the center of the screen of the self, the player who is thinking. The characters \n start a new line when printing.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Go ahead and save this.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;11. We need to compile our mod. Either through DOS or Windows, run the program PROQCC.EXE. It will join our source files into the PROGS.DAT in our Quake subdirectory.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;12. Finally, we're ready to enjoy the fruits of our labor. Run Quake with the command line:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c:\quake\quake.exe -game new +map e1m1<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will immediately load the first map, where you will see your cool message. Of course, you can change it to print anything you want. Man you're cool!<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Obviously this is an incredibly simple mod, but it will get you started. I strongly recommend the tutorials at Inside3D, a great editing site. I also suggest you experiment, that is, change lines of code to see what happens.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's it, class. I hope you passed the course, because I don't want to see your sorry butt  in QuakeC Summer School.<P>
+
+
+

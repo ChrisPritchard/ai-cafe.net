@@ -1,0 +1,196 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>New Fighting Styles</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One thing you don't see in bots, including the Tutor Bot, is multiple fighting techniques. That is, you don't see the bot choosing which way to attack you. You probably don't understand what I mean, since you haven't seen it before. There is, of course, more than one way to combat an enemy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sure, you'll see a bot circle strafe or something. You'll even see the Reaper flee from battle. But this doesn't exactly constitute diversity.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When you get into a fight with the average bot, you can observe what my friend Defiant calls "if then" thinking. In other words, simple, computer-like thoughts. For instance, "if" he can see you "then" he'll shoot you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Real people don't act this way in combat. At least I don't. I may strafe. I may back up in fear. I may circle my opponent. I may forget to move and just stand and shoot. And if I'm crushing an inferior foe, I may even strafe back and forth just to tease him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After this lesson, your bot will be able to do all these things.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For us -- and the bot -- the difficulty lies in matching the fighting style with the situation. There are many criteria, including his weapon, his opponent's weapon, his health, and more. He can be low on health and aggressive, or he can be low on health and nervous.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For the sake of argument, I will use a mixture of criteria. First we will create our new fighting technique routines. Open up TUTOR.QC and scroll to bot_strafe(), the attack movement routine. Before it, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() chase_enemy =
+// ----------------------
+{
+	movetogoal(20);
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * 300;
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You should understand this if you've been doing all my lessons. We use movetogoal() to make the bot walk, then we push him with 300 units of velocity. Nothing complicated. After that, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() back_up =
+// ----------------------
+{
+	if (walkmove (self.angles_y - 180, 20) == FALSE)
+		bot_run_slide();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here the bot will use walkmove() to back up. If he cannot, he will strafe. Very simple. After that, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() move_randomly =
+// ----------------------
+{
+	if (random() < 0.5)
+		bot_run_slide();
+	else if (random() > 0.5)
+		walkmove (self.angles_y - 180, 20);
+	else
+		walkmove (self.angles_y + 180, 20);
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whoa, if this were any simpler, it would say "See Dick run." We are just using random numbers to tell the bot to either step forward, step backward, or sidestep. That's it.<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() tease_enemy =
+// ----------------------
+{
+	if (random() <= 0.02)
+		if (self.lefty == 1)
+			self.lefty = 0;
+			else self.lefty = 1;
+
+	bot_run_slide();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hee hee hee. This is where we have a little fun. Serious (and boring) programmers would scoff at something like this, but I have a sense of humor. This little routine will make the bot strafe, occassionally changing his direction. After that, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() circle_enemy =
+// ----------------------
+{
+	if (vlen(self.enemy.origin - self.origin) < 80)
+		walkmove(self.angles_y - 180, 20);
+	if (vlen(self.enemy.origin - self.origin) > 110)
+		movetogoal(20);
+	else bot_run_slide();
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here we go from humorous to hardcore. Just like coffee_move(), this is one of my proudest subroutines. While other bots may eventually make it around their enemy just by strafing, with this routine our bot will run circles around you. Turn your observer mode on and stand in the middle of a room: He will literally run complete circles around you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we have a few new attack methods. We are ready to use them. The bot will call all but one of them from bot_strafe(). He will call tease_enemy() from ai_run(). So, you want to replace the whole bot_strafe() routine with this one:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ----------------------
+void() bot_strafe =
+// ----------------------
+{
+// this routine is called every frame during combat, 
+// so he strafes and dodges even while shooting
+
+	bot_check_ammo();
+
+	if (!visible(self.enemy))
+		{
+		chase_enemy();
+		return;
+		}
+
+	bot_face();
+
+// standing still if he's doing okay
+	if (self.health > self.enemy.health && self.frags > self.enemy.frags)
+		return;
+
+// circling the opponent for the best shot
+	if (self.enemy.frags > self.frags && self.enemy.health > self.health)
+		{
+		circle_enemy();
+		return;
+		}
+
+// stepping backwards for a long distance shot
+	if (self.weapon == IT_ROCKET_LAUNCHER)
+		back_up();
+
+// chasing the player here
+	else if (self.weapon == IT_SUPER_SHOTGUN)
+		chase_enemy();
+
+// moves unpredictably with lightning
+	else if (self.weapon == IT_LIGHTNING)
+		move_randomly();
+
+	else bot_run_slide();
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Coolie cool. I think my remarks explain the code pretty well. It should be self-explanatory anyway. If he can't see his foe, he'll try to move toward him. If he's doing alright, he will stand still. If both his health and frags are less than his oppoenent's, he will circle him. Etc, etc.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, one more change. Slide down to the routine bot_run(). Before the line bot_strafe(), add this:
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// messing around if he's doing really good
+	if (self.health > self.enemy.health && self.frags > self.enemy.frags + 5)
+		{
+		tease_enemy();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We had to stick this in bot_run() because here we want to stop him from shooting via his self.th_missile(), which you'll notice is below where we put this.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put another way, if his health is more than his foe's, and his frags are more than his foe's plus five, he will just strafe back and forth and not shoot. Just a little fun for you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(One useful thing about that routine is that his enemy will probably keep shooting at him and missing, therefore running out of ammo. Devious, eh?)<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That is our lesson for today. I think it is a great one; not many bots have "soul." They don't react like humans; they don't think about things; they don't have fun.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My last important message is this: experiment. I strongly encourage you to mix and match all of these methods and situations. Delete things, add things.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These styles can be taken in many different directions. You could make your bot choose his method randomly. You could let your bot move nervously when his health is less than 25. You could make a llama bot who always backs up in cowardice. You could make another who always aggressively chases you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You could even invent new methods. The point is, there is no wrong combination. This is all about personality. Enjoy your bot.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. There is more than one way to fight an enemy<BR>
+2. The routine bot_strafe() plays a central role in battle<BR>
+3. Your bot can attack his foe in several styles<BR> 
+4. Any bot can have personality if we give it to him<BR> 
+5. We need a sense of humor more than we need fuzzy logic<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

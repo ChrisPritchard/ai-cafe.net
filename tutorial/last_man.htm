@@ -1,0 +1,190 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Last Man Standing</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI for the sake of AI is pretty cool. But AI for application is where it's at. That is, learning more artificial intelligence is great, but its only academic until we make a game out of it. That's why I find some of these new QuakeC bots boring: they're smart and realistic and all, they just don't do anything special.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With this tutorial both you and the bot will learn how to play a game called Last Man Standing. It's not a new idea; in fact, it's been done before lots of times. The rules are simple: contestants start off with five frags. They lose a frag when they get killed. When they reach zero, they are eliminated. The last contestant in the game wins.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First step. Open client.qc and scroll down to PutClientInServer(). At the end of that routine, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 5)
+		look_for_others();
+
+	if (time < 3 && cvar("deathmatch") == 5)
+		self.frags = 5;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We play our game when we set the console variable "deathmatch" to five. Whenever the player re-enters the game, we look to see what others are standing or eliminated. When he first begins the game (if time < 3), we start him off with five frags.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Second step. Slide down to the routine ClientObituary(), which begins like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void(entity targ, entity attacker) ClientObituary =
+{
+	local	float rnum;
+	local	string deathstring, deathstring2;
+	rnum = random();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After this stuff, paste the following code:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 5)
+		{
+		if (targ.classname == "player" || targ.classname == "bot")
+			targ.frags = targ.frags - 1;
+		bprint(targ.netname);
+		bprint(" got fragged\n");
+		return;
+		}
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here, if we are playing our game, we subtract one frag from the "targ", the victim, of the kill. We print a little message and leave the subroutine. Save and close that file.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Third step. Open weapons.qc and go down to the routine W_Attack(). It begins like this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() W_Attack =
+{
+	local	float	r;
+
+	if (!W_CheckNoAmmo ())
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This routine is called when the player pushes the fire button. After that, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.frags <= 0 && cvar("deathmatch") == 5)
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What we are saying here is if the player's frags are zero or less, then he has been eliminated. Now he is in observer mode and is not allowed to shoot. So we just return out of the routine. I love it when a tutorial is this simple.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fourth step. We need to create our look_for_others() routine. Let's put it in world.qc, since it is before both tutor.qc and client.qc. Go ahead and open world.qc now. Scroll all the way down to the *very* end and paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void () look_for_others =
+{
+local entity plr, last;
+local float num;
+
+	last = world;
+
+	plr = nextent(world);
+	while(plr)
+		{
+		if ((plr.classname == "player" || plr.classname == "bot") && plr.health > 0 && plr.frags > 0)
+			{
+			last = plr;
+			num = num + 1;
+			}
+
+		if (plr.classname == "bot" && plr.frags <= 0)
+			remove(plr);
+
+		plr = nextent(plr);
+		}		
+
+	if (num == 1 && time > 3)
+		{
+		bprint(last.netname);
+		bprint(" is the Last Man Standing!\n");
+		}
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This is longer, yes, but it's still rather simple. We merely browse the entity list and look for contestants who are still in the game. That is, they have health and frags. We count them. If we find a bot with zero or less frags on accident, we just remove him. If our number of contestants is only one, we print a message praising him and end the game.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Note: I added the "&& time > 3" part so the game doesn't think you are the Last Man Standing when you start the game. Duh!<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Not done yet. Fifth step. Open up tutor.qc and go down to bot_look_for_players, where this will appear:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	client = checkclient ();
+	if (!client)
+		return FALSE;
+
+	if (teamplay)
+		if (self.team == client.team)
+			return FALSE;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We want our bot to ignore players who have been eliminated and are now only observers. Let's add this after that:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (client.frags <= 0 && cvar("deathmatch") == 5)
+		return FALSE;
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remember, bot_look_for_players() returns TRUE if he sees a player. Here, he doesn't. Simple, eh? We don't have to do this with bot_look_for_bots(), because when a bot is eliminated, will just remove him from the game entirely.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sixth step. Go down to the end of respawn_bot() and add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.frags <= 0 && cvar("deathmatch") == 5)
+		{
+		self.think = SUB_Remove;
+		self.nextthink = time + 0.1;
+		bprint(self.netname);
+		bprint(" is eliminated!\n");
+		}
+
+	if (cvar("deathmatch") == 5)
+		look_for_others();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If a bot respawns with zero or less frags, we print a message and tell him to remove himself in 0.1 seconds. We also check for other contestants left in the game.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last step. Drop down to the end of the routine create_bot() and add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (cvar("deathmatch") == 5)
+		bot.frags = 5;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Very simple. When a bot starts a game of Last Man Standing, he starts with five frags, just like a player. I will add now that if you want to change this value, say to 10 or whatever, you can do so. The game will still play, but it would just be longer.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That is our new game. I like it. Sometimes a game is cool just because of its simplicity. Also, this one is kind of neat because if you get eliminated, you get to watch your bots battle it out. Very cool indeed.<BR>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. We can use console variables to our advantage<BR>
+2. Use nextent(entity) to browse the entire entity list<BR>
+3. Uh, that's about it<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>

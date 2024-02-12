@@ -1,0 +1,159 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Bot Language</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you don't like to have fun with your bot, please leave now.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Good, I'm glad to see your still here. This tutorial is a bit on the silly side, but I think it's enjoyable. The bot is going to learn how to say randomly generated sentences, specifically, taunts. Oooh, goodie.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Of course, these sentences will be quite rudimentary. However, for the player, it may seem like the bot is saying something different every time he plays. Basically these sentences will consist of a verb, adjective, and noun (so your bot won't be giving speeches any time soon).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Since this is rather easy to do, we shall just get straight to the Artificial Sentence Generation Engine, also known as, the following routine:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_generate_sentence =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float verb, adj, noun;
+local entity plr;
+
+	plr = find(world, classname, "player");
+
+	if (plr.frags < self.frags)
+		{
+		verb = floor(random() * 7);
+		if (verb == 0) bprint("you're such a ");
+		if (verb == 1) bprint("you're just a ");
+		if (verb == 2) bprint("nothing but a ");
+		if (verb == 3) bprint("i'm playing with a ");
+		if (verb == 4) bprint("you look like a ");
+		if (verb == 5) bprint("go home you ");
+		if (verb == 6) bprint("what a ");
+
+		adj = floor(random() * 8);
+		if (adj == 0) bprint("stinking ");
+		if (adj == 1) bprint("sucky ");
+		if (adj == 2) bprint("horrible ");
+		if (adj == 3) bprint("pathetic ");
+		if (adj == 4) bprint("weak ");
+		if (adj == 5) bprint("girlie ");
+		if (adj == 6) bprint("dumb-ass ");
+		if (adj == 7) bprint("frickin ");
+
+		noun = floor(random() * 7);
+		if (noun == 0) bprint("player\n");
+		if (noun == 1) bprint("llama\n");
+		if (noun == 2) bprint("loser\n");
+		if (noun == 3) bprint("buttmunch\n");
+		if (noun == 4) bprint("girl\n");
+		if (noun == 5) bprint("bonehead\n");
+		if (noun == 6) bprint("midget\n");
+		}
+
+
+	if (plr.frags >= self.frags)
+		{
+		verb = floor(random() * 5);
+		if (verb == 0) bprint("i respect your ");
+		if (verb == 1) bprint("i admire your ");
+		if (verb == 2) bprint("wish i had your ");
+		if (verb == 3) bprint("how do you like his ");
+		if (verb == 4) bprint("whoa, you've got ");
+
+		adj = floor(random() * 6);
+		if (adj == 0) bprint("wonderful ");
+		if (adj == 1) bprint("mad ");
+		if (adj == 2) bprint("world-class ");
+		if (adj == 3) bprint("sharp ");
+		if (adj == 4) bprint("awesome ");
+		if (adj == 5) bprint("man-sized ");
+
+		noun = floor(random() * 6);
+		if (noun == 0) bprint("skills\n");
+		if (noun == 1) bprint("playing\n");
+		if (noun == 2) bprint("balls\n");
+		if (noun == 3) bprint("courage\n");
+		if (noun == 4) bprint("aim\n");
+		if (noun == 5) bprint("style\n");
+		}
+
+	sound (self, CHAN_VOICE, "misc/talk.wav", 1, ATTN_NONE);
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hehe, can you tell that I was laughing when I wrote this? The routine should result in some silly sentences. Now you'll know what your bot is really thinking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This may be long, but it's very simplistic. First it finds the player. Next it ascertains whether the bot's frags are more than the player's. If so, the bot will talk smack. If not, the bot will pay you respect. Then the code prints a verb phrase, adjective, and noun chosen with random number. Lastly, it plays the talk beep.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Easy. Naturally, you can edit any of these sections; I wrote them quite quickly. You can also add to each section. Try to aim for realistic yet amusing sentences.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By the way, you should probably paste this routine right before the subroutine bot_talk() in tutor.qc.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We just have to call this routine now. You better have done my bot talking tutorial, because we'll need that code now. Go into the subroutine bot_talk(), where you'll see this:<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void() bot_talk =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local float talk;
+
+	if (random() < 0.5)
+		{
+		self.talk_subject = 0;
+		self.talk_time = time + 60;
+		return;
+		}
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For the sake of simplicity, we will tell our bot to use the new routine on a random occasion. So, after the previous code, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (random() < 0.25)
+		{
+		bot_generate_sentence();
+		self.talk_time = time + 60;
+		self.talk_subject = 0;
+		return;
+		}
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So, 25 perecent of the time he feels like talking, he will utter one of his elloquent new sentences. He resets his talking information, then leaves the routine. Everybody's happy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That brings us to the end of yet another soul-stirring bot tutorial. As always, you can take it or leave it. You can tweak any part of it. Or you can sell it to Microsoft and become laughably rich, forgetting all about your chummies in the Quake community.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It's your choice.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Random numbers could probably solve world hunger if applied properly<BR>
+2. It's bad form to have a number one without a number two<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>
+
+

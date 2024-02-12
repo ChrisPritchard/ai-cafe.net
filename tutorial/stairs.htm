@@ -1,0 +1,111 @@
+<html>
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Decending Stairs</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The jumping AI of the tutor bot has always been pretty poor. RiEvEr's improved jumping AI code improved the matter somewhat, but it didn't take into account one of the most annoying problems displayed by most bots. That is, it doesn't walk down stairs.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You must have noticed, that when confronted with a staircase, the bot leaps down it instead of running down. This is because both coffee's and RiEvEr's jumping code work by checking a distance ahead and below the bot, which can either mean that there is a ledge in front of the bot, or a ramp or stairs. Luckily, I've written some code to sort out this problem once and for all.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ok then, I'm assuming that you've already completed the 'Better Jumping For Sure!' tutorial, else this tut won't work too well. Open up tutor.qc and scroll down to check_for_ledge, which will now begin like so:<br>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+//RiEvEr
+// BETTER JUMPING FOR SURE!
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+float() check_for_ledge =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Return values:
+// 0 = NOJUMP
+// 1 = JUMP
+{
+	local   float   contents;
+	local   vector  start, end;
+
+	makevectors (self.angles);
+
+// movetogoal() will never move over a ledge, so we have to 
+// check for a break in front of him and force him to jump
+
+	if (self.jumpin)
+		return(0);
+
+	// Where the bot's feet are now
+	start = self.origin - '0 0 24';
+	end = start + v_forward *96;
+
+	// Check 96 Quake units in front of the bot at foot height
+	traceline (start, end, TRUE, self);
+
+	// If there's a wall or obstacle, return NOJUMP
+	if (trace_fraction != 1.0)
+		return (0); // NOJUMP
+
+	start = end;
+	end = start - '0 0 256'; //256 units down 
+
+	// Now look down and see how far we drop and what's there (MAX 256 units)
+	traceline (start, end, TRUE, self);
+
+	contents = pointcontents (trace_endpos);
+	// If it's LAVA, SLIME or a long way down and no ledge to jump to, return DANGER
+	if ( (trace_fraction == 1.0) || (contents == CONTENT_LAVA) || (contents == CONTENT_SLIME) )
+		return (0); // NOJUMP
+
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now we'll stick in my stair checking code here, in the jumping ai. Paste in the following right there:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+//      SkinSki stair decending code - START
+
+	start = self.origin - '0 0 24';
+	end = start + v_forward * 48;
+
+	traceline (start, end, TRUE, self);
+
+	start = trace_endpos;
+	end = start - '0 0 50'; //50 units down 
+	traceline (start, end, TRUE, self);
+
+	if (trace_fraction != 1)
+		return(0);
+
+//      SkinSki stair decending code - END
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This does a couple of things. Firstly, it runs a traceline 48 units forward from the bot's feet. Then, it traces 50 units down from there. If it touches ground, it assumes it has found a step or ramp. It's not too complex really.<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's the end of another simple but useful tutorial.<p>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. These tutorials are slowly hacking down the tutor bot's weaknesses<BR>
+2. Even the best jumping AI can be improved<BR>
+3. Only dull bots jump down stairs they could run down<P>
+
+<CENTER><P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="MS Sans Serif"><FONT SIZE=+0>
+Author: SkinSki<BR>
+Questions: <A HREF="mailto:skinski@email.com">skinski@email.com<BR></A>
+AI chat on ICQ: 30578982</FONT></FONT><BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center></P></CENTER>
+
+</BODY>
+</HTML>

@@ -1,0 +1,145 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Chasing Enemies</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A bot is not tough unless he can kill you.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Most people would not argue with that. Features are cool, and personality is neat. However, the average online player will not take a bot seriously unless that bot can frag him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A bot will kill you if he picks up the bigger gun or shoots at you more quickly. That's fine. What is really impressive, though, is when the bot can wear you down, chase you when you try to flee, and finish you off when it counts. After all, who doesn't feel like a pasty-faced loser when running away at full speed, only to take a rocket up the ass by a computer-controlled opponent?<BR> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Not many artificial deathmatch foes out there can accomplish this. The Reaper does. And maybe the Omicron and Frogbot, but they work with waypoints. In about five minutes, you can add your bot to that list. He will soon learn how to chase enemies through teleporters and around corners.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you know, I use QuakeC's native navigational methods, walkmove() and movetogoal(), for my bots. Yet in this application they have limitations. Walkmove() only pushes the bot forward; it will not attempt to move around an obstacle. Movetogoal() will walk toward his self.goalentity, yet if his enemy slips through a teleporter, he may end up somewhere entirely different on the map (like far behind or way above the bot). This renders movetogoal() useless.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Another problem we have is that we cannot set a teleporter as the bot's self.goalentity. A teleporter is what we call a "static" entity; it resides in the map, yet it does not use setorigin() to place itself in the world. In other words, it has a middle, yet no entity is resting in that middle.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alright, so those are our problems. If you are astute, you may already have ascertained the solution: we will create a new invisible entity for the bot, which he can place in the middle of the teleporter while chasing an enemy on the other side of that teleporter. This way, we can utilize movetogoal() anytime.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Did I confuse you there? No worry, it will make sense when you see it all come together. First we will define this new entity. We will call it our "tracker." Open up defs.qc and add this at the bottom:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+.entity tracker;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Since this is a .entity or "dot entity" (or its real name, field), then other entities can own one of these. In fact, every player and bot in the game will have his own. So, close that, and open client.qc. We will have to spawn one for each player as he enters the game. At the end of PutClientInServer(), add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (time < 3)
+		self.tracker = spawn();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When a client enters or re-enters the world, if it is the beginning of the game, we create him a tracker entity. Now close that and open up tutor.qc. Scroll down to bot_spawn(), and at the end of that routine, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	bot.tracker = spawn();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Every player and every bot now has his own tracker. As we mentioned before, the tracker will be placed at the teleporter when he walks through one. Interestingly enough, we don't have to do any calculations to accomplish this; we can just utilize the teleporter's touch function. Just wait. Open up triggers.qc and scroll to about the middle. You will see the routine teleport_touch(). In the middle of that, you will see this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// only teleport living creatures
+	if (other.health <= 0 || other.solid != SOLID_SLIDEBOX)
+		return;
+
+	SUB_UseTargets ();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, add this line:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	setorigin(other.tracker, other.origin);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We're already done with that file. Told you it was interesting. You see, we know the true origin of the teleporter here, because the player -- the other -- is touching it in this routine! Thus we just set hs tracker at his current origin. The tracker now marks the teleporter into which the guy was trying to escape. Get a load of that.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We go onto our last part now (whoa -- already?). Open up tutor.qc and slip down to the fighting routine bot_run(). Towards the beginning, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (!visible(self.enemy))
+		{
+		hunt_enemy();
+		return;
+		}		
+
+	setorigin(self.enemy.tracker, self.enemy.origin);
+	self.goalentity = self.enemy;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here is where we activate our chasing method. If the enemy is not visible, then the bot knows to chase him. If he is visible, then the bot actually sets the enemy's tracker entity to the enemy's origin. Thus, the tracker will always be resting in the last seen location of the enemy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, this may be a bit strange, because in one instance, the player sets his own tracker, and the next instance the bot sets it for him. Why do we do this? Convenience, of course. It is much easier to set the tracker at the teleporter in the teleporter's touch function. No math that way. You know I hate math.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lastly, we set his goal entity back to his enemy. We have to do this because we switch it around in the new chasing routine. Speaking of that, here it is. Paste it above bot_run():<BR>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void () hunt_enemy =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+
+	self.goalentity = self.enemy.tracker;
+
+	if (vlen(self.origin - self.goalentity.origin) <= 30 && time > self.enemy.teleport_time + 4)
+		setorigin(self.enemy.tracker, self.enemy.origin);
+
+	if (visible(self.enemy.tracker))
+		{
+		self.angles_y = vectoyaw(self.enemy.tracker.origin - self.origin);
+		if (walkmove(self.angles_y, 20) == TRUE)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_forward * self.speed;
+			return;
+			}
+		}
+
+	movetogoal(20);
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * self.speed;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Not too long, not too bad. We know in this routine that the enemy is invisible, so we set the bot's goalentity to the tracker. For the next two lines: if the bot is close to the enemy, or the enemy has not teleported in the last four seconds (in other words, the bot got through the teleporter), then we'll set the tracker at the enemy's actual origin.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For the rest of the routine: if the bot can see and walk straight toward the tracker entity, we'll use walkmove() since it is fast and direct. We'll push him with the velocity code and leave the routine. If he cannot move directly forward or cannot see the tracker, we will utilize movetgoal(), which will navigate for us, then push him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I know it may not seem like much, but that's the end of one of the Cafe's best tutorials. No longer can you just slip through a teleporter to avoid your bot: he will come to get your sorry butt.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To recap, we spawn an invisible entity for each opponent. If he goes through a teleporter during combat, that entity is set at the teleporter location, else it is set at the last location at which his enemy sees him. Then his enemy uses that entity as a waypoint of sorts to chase him.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your bot will not always find you using this method, but nine out of ten times it will work. I have often turned around after running through a teleporter, only to see my bot popping through and greeting me with a shotgun blast. I think that's pretty hardcore.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. Teleporters don't have normal visible origins<BR>
+2. We cannot use movetogoal() for teleporters<BR>
+3. Walkmove() is fast and direct, while movetogoal() navigates itself<BR> 
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+
+</BODY>
+</HTML>

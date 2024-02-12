@@ -1,0 +1,222 @@
+<html>
+<head>
+<TITLE>AI Tutorial</TITLE>
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Dropping Weapons</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dropping acid. Dropping trou. Dropping a deuce. What do all these things have in common? They are all things that we won't learn in today's tutorial.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dropping a weapon. That's what this lesson will cover. Specifically, we will add a feature into our mod which will enable the player or bot to drop his current weapon so that a teammate may pick it up.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We could show the individual model for each particular weapon when it is discarded, but for the sake of ease, we will use the backpack model for all of them. Technically, the dropped gun will become a backpack, adopting the backpack touch function and saving us code. Come to think of it, this is a bit more realistic, since you will also drop your current ammo with the weapon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;To know how to do this, I examined a few subroutines in the file items.qc, like weapon_touch() and BackpackTouch() (don't you just love how those filthy rich coders at id software used inconsistently named routines in QuakeC?). You can learn a lot about items and weapons in there.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Indeed, you should open it up right now, and scroll all the way to the bottom. This is where we will paste our new dropping function:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void(entity him) drop_current_weapon =
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{
+local entity item, temp;
+
+	if (him.weapon == IT_AXE || him.weapon == IT_SHOTGUN)
+		{
+		if (him.classname == "player")
+			sprint(him, "you cannot drop this\n");
+		return;
+		}
+
+	item = spawn();
+	item.origin = him.origin - '0 0 24';
+	
+// naming the contents of the backpack
+	item.items = him.weapon;
+	if (item.items == IT_SUPER_SHOTGUN)
+		item.netname = "Double-barrelled Shotgun";
+	else if (item.items == IT_NAILGUN)
+		item.netname = "Nailgun";
+	else if (item.items == IT_SUPER_NAILGUN)
+		item.netname = "Super Nailgun";
+	else if (item.items == IT_GRENADE_LAUNCHER)
+		item.netname = "Grenade Launcher";
+	else if (item.items == IT_ROCKET_LAUNCHER)
+		item.netname = "Rocket Launcher";
+	else if (item.items == IT_LIGHTNING)
+		item.netname = "Thunderbolt";
+	else
+		item.netname = "";
+
+// giving the backpack the player's current ammo
+	if (him.weapon == IT_SUPER_SHOTGUN)
+		{
+		item.ammo_shells = him.ammo_shells;
+		him.ammo_shells = 0;
+		}
+	if (him.weapon == IT_SUPER_NAILGUN || him.weapon == IT_NAILGUN)
+		{
+		item.ammo_nails = him.ammo_nails;
+		him.ammo_nails = 0;
+		}
+	if (him.weapon == IT_GRENADE_LAUNCHER || him.weapon == IT_ROCKET_LAUNCHER)
+		{
+		item.ammo_rockets = him.ammo_rockets;
+		him.ammo_rockets = 0;
+		}
+	if (him.weapon == IT_LIGHTNING)
+		{
+		item.ammo_cells = him.ammo_cells;
+		him.ammo_cells = 0;
+		}
+
+	him.currentammo = 0;
+	him.items = him.items - him.weapon;
+
+// doing a switcheroo between "self" and "him" because the subroutines
+// W_SetCurrentAmmo() and bot_set_currentammo refer to a "self" entity
+	temp = self;
+	self = him;
+
+	if (self.classname == "player")
+		{
+		self.weapon = W_BestWeapon ();
+		W_SetCurrentAmmo();
+		}
+		else
+		{
+		self.weapon = bot_bestweapon();
+		bot_set_currentammo();
+		}
+
+	self = temp;
+
+// throwing the backpack and giving it a shape
+	item.velocity_z = 300;
+	item.velocity_x = -100 + (random() * 200);
+	item.velocity_y = -100 + (random() * 200);
+	
+	item.flags = FL_ITEM;
+	item.solid = SOLID_TRIGGER;
+	item.movetype = MOVETYPE_TOSS;
+	setmodel (item, "progs/backpack.mdl");
+	setsize (item, '-16 -16 0', '16 16 56');
+	item.touch = BackpackTouch;
+
+	item.owner = him;
+	item.attack_finished = time + 4;	
+	item.nextthink = time + 120;	// remove after 2 minutes
+	item.think = SUB_Remove;
+};</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you are at least half awake, you will notice that this holds many similarities with id's DropBackPack() sub. Good, you're paying attention. You get a gold star. Hey, QuakeC is there for the taking; let's cut and paste as much of it as we can. It's free, so what are you worried about?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There are some differences, of course. First, everything refers to the entity "him". We do this because we will call drop_current_weapon() from locations where the "self" entity does not refer to the player or bot doing the dropping. Secondly, we subtract the current weapon from that player or bot entity. Thirdly, we only add the current weapon and ammo to the backpack.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also, as you can see in the middle there, we pulled a switcheroo between the "self" entity and the "him" entity. That's because the subroutines W_SetCurrentAmmo() and bot_set_currentammo() refer to a "self" entity, so only a player or bot can call those routines properly.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lastly, you may have noticed the weird reference to "self.attack_finished" near the end. Of course, the backpack isn't going to be attacking anyone; we borrow this variable as a time delay. We don't want the guy doing the dropping to pick up the pack instantly; so, we forbid him to touch it for the next four seconds. Paste this next code at the beginning of the subroutine BackpackTouch(), after the bracket and floats:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (other == self.owner && time < self.attack_finished)
+		return;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See? The owner of the dropped backpack has to wait four seconds if he has changed his mind about what guns he wants to carry.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we must add an impulse that the player can use to actually do this. Open up weapons.qc and tiptoe down to the sub ImpulseCommands(). In there somewhere, add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 150)
+		drop_current_weapon(self);
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This should not make your brain hurt or anything. Type impulse 150 into the console to drop your weapon and ammo. The "self" entity here of course is the player, so everything is kosher.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hmm, uh, I guess we're done. This new feature will be useful in teamplay to trade weapons among your mates. The thing is, outside of teamplay, there may not be a use for it. Hmm. I suppose we could invent a use for it, right? Right? Class? Class? Anybody?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;What we'll do is create a (big word alert!) encumbrance system. Some of you may know that term from Dungeons and Dragons. When you carry stuff, you are encumbered with that stuff. It weighs you down. Myself, I'm encumbered with a monthly car payment, a virgin girlfriend, and feelings of insecurity, but that's another story.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So, we will only allow the player to pick up certain weapons if he does not own a certain other, because, evidently, they would weigh him down to much. For instance, he cannot pick up a rocket launcher if he owns a Thunderbolt. Our system will not necessarily be realistic, but it will be brief. Note that this is optional, your choice, your preference. Scroll up to the weapon_touch() sub, which begins like so:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+=============
+weapon_touch
+=============
+*/
+float() W_BestWeapon;
+
+void() weapon_touch =
+{
+	local	float	hadammo, best, new, old;
+	local	entity	stemp;
+	local	float	leave;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that crap, paste this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (  (self.weapon == IT_SUPER_SHOTGUN && (other.items & IT_NAILGUN) ) ||
+		(self.weapon == IT_NAILGUN && (other.items & IT_SUPER_SHOTGUN) ) ||
+		(self.weapon == IT_SUPER_NAILGUN && (other.items & IT_GRENADE_LAUNCHER) ) ||
+		(self.weapon == IT_GRENADE_LAUNCHER && (other.items & IT_SUPER_NAILGUN) ) ||
+		(self.weapon == IT_ROCKET_LAUNCHER && (other.items & IT_LIGHTNING) ) ||
+		(self.weapon == IT_LIGHTNING && (other.items & IT_ROCKET_LAUNCHER) ) )
+			{
+			if (other.classname == "bot")
+				{
+				if (random() > 0.75)
+					drop_current_weapon(other);
+				other.goalentity = world;
+				self.search_time = time + 30;
+				}
+				else sprint(other, "you cannot carry this weapon\n");		
+			return;
+			}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, that is one long and ugly if/then statement. Unfortunately, but needed. If a player of bot touches a certain weapon and he owns a certain other one, we exit the subroutine, prohibiting him from picking it up. If it is a bot, we will tell him to "decide" randomly to drop his current gun 25 percent of the time, then we will clear his goal entity. Recall that the bot touching the weapon is the "other" entity, so we pass "other" along to our drop_current_weapon() routine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If the other entity is a player, we will print a cute little message. In either case, we will leave the sub. Of course, if all of these instances are not true, we will continue with the routine and let the player or bot pick up that weapon.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now, if the player prefers that weapon to one he already has, he can switch to that gun, drop it, and pick up the new one. Yes, this is very rough around the edges, but I told you it was optional, and open for development. Don't like it, don't use it. But it will give the player a need to use the drop command.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you don't use this optional encumbrance system, that's okay; the next lesson will cover giving orders to teammate bots. Thus you will be able to order a bot to give you a weapon if you need one.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oh yeah, one little last step. Open up defs.qc and throw these lines in at the bottom:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() bot_set_currentammo;
+void(entity him) drop_current_weapon;
+float() bot_bestweapon;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These are all subroutines that will be called befeore they appear in code, therefore we must declare them first. That's it.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By the way, "deuce" in the third sentence of this lesson refers to two, as in number two, as in going to the bathroom. In case you were wondering.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. we can get ideas - and code - from existing QuakeC files<BR>
+2. you can interrupt routines with if/then/return statements<BR>
+3. we can pass particular entities to subroutines as parameters<BR>
+4. confusing "other" and "self" entities can result in nasty bugs<BR>
+5. coffee has weird euphemisms for taking a dump<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+AI chat on ICQ: 2716002<BR>
+<a href="../home.htm">Return to home</A>
+<HR SIZE=3 WIDTH=100% ALIGN=Center><P>
+</CENTER>
+</HTML>

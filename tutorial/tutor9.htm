@@ -1,0 +1,182 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Spawning a Monster Bot</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Magicians can pull a rabbit out of a hat. I'll teach you how to pull an ogre out of thin air.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yes, it's time to stop screwing around with wimpy tutorials and get to the real deal, how to spawn a mobot. We will run into a contradiction while doing this: spawning a monster bot is very simple, yet very technical.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm sure you've had tough classes like Calculus in school where you learned how to solve problems without really understanding them. Just memorize the steps and repeat them on the test. Spawning bots is a bit like this. You don't have to understand each line, just cut and paste them.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As you know from earlier lessons, a bot is nothing more than an entity. It is an entity with a size, model, animation, movement type, and other characteristics. It only takes one subroutine to create this entity, and here it is:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// ------------------------------------------------
+void() create_mobot =
+// ------------------------------------------------
+{
+
+local entity bot, spawn_spot;
+
+// start entity and place it in world 
+	bot = spawn();
+	spawn_spot = SelectSpawnPoint ();
+	bot.origin = spawn_spot.origin + '0 0 1';
+	bot.angles = spawn_spot.angles;
+	bot.fixangle = TRUE;	
+	spawn_tfog (bot.origin);
+	spawn_tdeath (bot.origin, bot);
+
+// set size and shape
+	setsize (bot, VEC_HULL2_MIN, VEC_HULL2_MAX);
+	bot.solid = SOLID_SLIDEBOX;
+	bot.movetype = MOVETYPE_STEP;
+	setmodel(bot, "progs/ogre.mdl");
+	bot.flags = bot.flags | FL_MONSTER;
+	bot.takedamage = DAMAGE_AIM;
+
+// define his animation
+	bot.th_stand = ogre_stand1;
+	bot.th_walk = ogre_walk1;
+	bot.th_run = ogre_run1;
+	bot.th_die = ogre_die;
+	bot.th_melee = ogre_melee;
+	bot.th_missile = ogre_nail1;
+	bot.th_pain = ogre_pain;
+	bot.health = 200;
+
+// polish him up
+	bot.classname = "monster_ogre";
+	bot.ideal_yaw = bot.angles * '0 1 0';
+	bot.yaw_speed = 120;
+	bot.view_ofs = '0 0 22';
+	bprint("an ogre joins the game\n");
+
+// begin his thinking
+	bot.nextthink = time + 0.1 + random();
+	bot.think = bot.th_walk;
+
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copy this code, open up OGRE.QC, and paste it at the very end (so the ogre animations we refer to are already defined).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This code will create a monster out of thin air. and put him at a deathmatch spawn point. Shall we take a look? I suppose we must.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, we spawn a new entity called "bot." Next we select a spawn point for it and set it at that location.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Next we give it size and shape. I should note that the funtions called setsize() and setmodel() are important, as well as the variables "solid" and "movetype." These really make the mobot seem like a mobot.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then we define his animation. This part is cool: we can actually create any kind of creature we want. You see, at the end of each monster QuakeC file, for example SHAMBLER.QC, is his "birth" routine. You can find his animation there. I just copied the ogre's animation, changed "self" to "bot," and pasted it here.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(For a homework assignment, you could try to make a demon or a shalrath.)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that we give the bot a few more traits. I don't really think a lot about these, so you don't have to either.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lastly, we tell him to think his walking thoughts, and we let him go out into the world. I almost feel like crying. Our little entity has grown up, and he's almost ready to kill marines.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So let's put this bad boy into the game. Open up WEAPONS.QC and scroll down to this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+/*
+============
+ImpulseCommands
+
+============
+*/
+void() ImpulseCommands =
+{
+	if (self.impulse >= 1 && self.impulse <= 8)
+		W_ChangeWeapon ();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After this code, add the following lines:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.impulse == 100)
+		create_mobot();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, we didn't do any calculus, so I bet you could tell me what that means. Yes, you're right; when we type impulse 100 into the Quake console, we will create a mobot. Even simpler, we could type this into the console:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bind m "impulse 100"<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then every time you press m, a bot will be spawned at a different deathmatch point. There are two last simple steps. Go back up to the very beginning of WEAPONS.QC, where you will see this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// called by worldspawn
+void() W_Precache =
+{
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After that, paste in the following code:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	precache_model ("progs/ogre.mdl");
+	precache_model ("progs/h_ogre.mdl");
+	precache_model ("progs/grenade.mdl");
+	precache_sound ("ogre/ogdrag.wav");
+	precache_sound ("ogre/ogdth.wav");
+	precache_sound ("ogre/ogidle.wav");
+	precache_sound ("ogre/ogidle2.wav");
+	precache_sound ("ogre/ogpain1.wav");
+	precache_sound ("ogre/ogsawatk.wav");
+	precache_sound ("ogre/ogwake.wav");
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When you play Quake, all sounds and models that will be used must be pre-loaded. We just took care of that. Honestly, I just copied these from the bottom of the OGRE.QC file.<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lastly, since our create_mobot() routine is in OGRE.QC and WEAPONS.QC comes before that, we have to declare that routine before we call it. So before W_Precache(), we will insert this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() create_mobot;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let me say one last thing, then I'll let you compile and play with your new pet ogre. This creature isn't really a mobot yet. That is, he won't act like a bot. This ogre will use all of id software's normal AI code.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Because of that, I suggest going back to the monster improvement tutorial and fixing him up. At least now he's yours to enjoy. You can spawn ogres into any deathmatch map, and you can easily improve his intelligence.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See, that was easier than calculus. More fun, too.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. A monster is merely an entity that moves and acts like a monster<BR>
+2. If we define that entity correctly, we can make it any of id's creatures<BR>
+3. We don't have to undestand every line of QuakeC, we just need to know what goes where<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+
+
+
+
+
+
+

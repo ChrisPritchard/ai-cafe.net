@@ -1,0 +1,165 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Understanding Monster Animation</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You may have noticed that the monsters in Quake don't do much.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;They don't jump, sing or dance. They don't even duck or evade. But they could; QuakeC has the power to make them do all of this. Well, maybe not sing.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this lesson we will be learning about animation frames and sequences. You might not do any special scenes for your monsters, so it might not seem relevant. But every Quake creature thinks during his animation, therefore it's good to know.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By the end of this tutorial, we will have an enforcer who ducks under projectiles.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Quake monsters think one time per frame of animation in the game. That is, they think 10 times a second, or every 0.1 seconds. Their thoughts and motions are grouped into sequences that look like this:<P>
+
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()	enf_stand1	=[	$stand1,	enf_stand2	] {ai_stand();};
+void()	enf_stand2	=[	$stand2,	enf_stand3	] {ai_stand();};
+void()	enf_stand3	=[	$stand3,	enf_stand4	] {ai_stand();};
+void()	enf_stand4	=[	$stand4,	enf_stand5	] {ai_stand();};
+void()	enf_stand5	=[	$stand5,	enf_stand6	] {ai_stand();};
+void()	enf_stand6	=[	$stand6,	enf_stand7	] {ai_stand();};
+void()	enf_stand7	=[	$stand7,	enf_stand1	] {ai_stand();};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Okay, now don't get all nervous on me. This may look ugly, but it is simple to understand. It's just a type of QuakeC shorthand. There are seven numbered subroutines here. Let's pull one apart and see what it means without the shorthand:<P>
+
+<FONT COLOR="DFBFFF" FACE="System">
+void() enf_stand1 =<BR>
+{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.frame = $stand1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.think = enf_stand2;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.nextthink = time + 0.1;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_stand();<BR>
+};<P>
+</FONT>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So each of these routines sets his animation frame. Here the enforcer is standing. Then it tells the monster to "think" the next routine in the series in 0.1 seconds. It also tells the enforcer to execute the subroutine called ai_stand(), during which he looks for enemies.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That's the deal. It's just a sequence of events that loops over and over (note the "enf_stand1" in the last line of code). It's his camping behavior.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If we wanted to screw around with it, we could change it to this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()	enf_stand1	=[	$stand1,	enf_stand2	] {};
+void()	enf_stand2	=[	$stand1,	enf_stand3	] {};
+void()	enf_stand3	=[	$stand1,	enf_stand1	] {};
+</FONT>
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Notice I changed all his animation frames to $stand1, which means his body won't move or vibrate at all. I also removed the ai_stand(), which means he won't look for enemies; in fact, here he is not really thinking about anything at all.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also note the fact that the last routine, enf_stand3(), will loop back up to enf_stand1(). An animation sequence can have any number of lines of code.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Let's screw around even more and create a new sequence:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void() enf_camp1 =[	$stand1, enf_camp2	] {ai_stand(); self.angles_y = self.angles_y - 15; };
+void() enf_camp2 =[	$stand2, enf_camp3	] {ai_stand(); self.angles_y = self.angles_y - 15; };
+void() enf_camp3 =[	$stand3, enf_camp4	] {ai_stand();};
+void() enf_camp4 =[	$stand4, enf_camp5	] {ai_stand();};
+void() enf_camp5 =[	$stand5, enf_camp6	] {ai_stand(); self.angles_y = self.angles_y + 15; };
+void() enf_camp6 =[	$stand6, enf_camp6	] {ai_stand(); self.angles_y = self.angles_y + 15; };
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cool, now we have a "camp" sequence for the enforcer. It's just about the same as his stand routines above, only it's more realistic: he'll now pivot one way, then the other, as if he were looking around the room.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remembering that he will execute anything between the {} marks, I just inserted "self.angles_y = self.angles_y - 15;" which will turn him 15 degrees to one direction. Then he repeats it, pauses for two frames, and turns twice in the opposite direction.<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But really, this is all kid's stuff. Let's do what id software wouldn't do -- let's make him duck under enemy missiles.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you've noticed the enforcer's pain animation, you've probably seen him double over in pain. It's a nice, fairy long sequence. It kind of looks like he is ducking, right?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Well, that's the sequence that begins with enf_paind1(). It has 19 lines of code, which happen every 0.1 seconds, which means it lasts almost 2 seconds.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I'm going to copy and paste it, then use my search and replace feature to make a new routine looking like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+void()	enf_duck1	=[	$paind4,	enf_duck2	] { ai_face(); self.solid = SOLID_NOT; };
+void()	enf_duck2	=[	$paind5,	enf_duck3	] {};
+void()	enf_duck3	=[	$paind6,	enf_duck4	] {};
+void()	enf_duck4	=[	$paind7,	enf_duck5	] {};
+void()	enf_duck5	=[	$paind7,	enf_duck6	] {};
+void()	enf_duck6	=[	$paind7,	enf_duck7	] {};
+void()	enf_duck7	=[	$paind7,	enf_duck8	] {};
+void()	enf_duck8	=[	$paind7,	enf_duck9	] {};
+void()	enf_duck9	=[	$paind7,	enf_duck10	] {};
+void()	enf_duck10	=[	$paind7,	enf_run1	] { self.solid = SOLID_SLIDEBOX; };
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There we have it. There's not much to know. We use the animation frames from the pain script (which are saved in the .mdl file, by the way), to make it look like he's ducking.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You'll notice that I chose the frames which most looked like ducking (pain4 to pain7). You'll also notice that I repeated the pain7 frame seven times. I want him to stay crouched for a little while.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But we have to do a quick-and-dirty hack here. We want to make the player's missiles go over or through him. So in the first line, I make his body sort of transparent, so everything will pass through it. In the last line, I switch it back to solid, so he's normal when the script is done.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Remember, he is the "self" since he is thinking the thoughts.)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You'll notice that I also inserted ai_face() before that. This turns him toward his enemy before he ducks, which looks more sensible.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The last line, enf_duck10(), will loop him over to enf_run1(), which his running-and-fighting animation sequence. In other words, he'll go back to fighting after this.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We have the ducking now; we just need to tell him when to do it. The variable "attack_finished" is set for the length of an attack whenever a player fires. Therefore, if the current game time is less than the "attack_finished" of a monsters's enemy, that means that player is attacking, right?<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Open up AI.QC and scroll down to the last routine, ai_run(), the part that looks like this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// look for other coop players
+	if (coop && self.search_time < time)
+	{
+		if (FindTarget ())
+			return;
+	}
+
+	enemy_infront = infront(self.enemy);
+	enemy_range = range(self.enemy);
+	enemy_yaw = vectoyaw(self.enemy.origin - self.origin);
+</FONT>
+</PRE>
+
+	Then after this line add this:<P>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.classname == "monster_enforcer" && time < self.enemy.attack_finished && random() < 0.25)
+		{
+		enf_duck1();
+		return;
+		}
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Uh-oh, that long line looks scary. But it isn't really. Here's what it says in English:<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"If the current monster is an enforcer and his enemy is attacking and he feels like it, then he should duck."<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First, we check the classname of the monster that is thinking, since all monsters use ai_run(). If he's an enforcer, we look to see if his enemy's "attack_finished" variable is active.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;But then we don't want him to duck under every attack. Therefore we check a random number, which will allow him to duck only 25 percent of the time.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If all these situations are true, we call the duck routine and then "return," or leave the current subroutine.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If I talk any more, I'll make it seem more complicated than it is (it is very simple), so I'll shut up. Just compile it and check out a map like E2M1. Your rockets will go right over that ducking enforcer.<P>
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. You can create any animation scene out of id software's pre-defined frames<BR>
+2. An animation sequence with ten lines will only last one second<BR>
+3. Enforcers look cool when they duck<P>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+Author: Coffee<BR>
+Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
+

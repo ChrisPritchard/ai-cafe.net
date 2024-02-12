@@ -1,0 +1,137 @@
+<head>
+<a name="top"> </a>
+<TITLE>AI Tutorial</TITLE>
+<META NAME="keywords"  CONTENT="quake, minion, single player, deathmatch, quakec, new game">
+<META NAME="description"  CONTENT="Single players can enjoy an exciting new deathmatch sport with this QuakeC game that features morphing, vicious AI and more.">
+</HEAD>
+
+<BODY LINK="DFBFFF" ALINK="DFBFFF" VLINK="DFBFFF" BGCOLOR="0080C0" TEXT="FFFFFF">
+
+
+
+<FONT FACE="MS Sans Serif" SIZE=3>
+
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<FONT FACE="Impact" SIZE=+3>
+<CENTER>Faster Movement</CENTER>
+</FONT>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+<P>&nbsp;<P>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Some of you probably think the Tutor Bot moves too sluggishly. You probably think he's not very hard core.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We're about to make him hard core.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There are two major methods of bot movement. One, by velocity and two, by source code. Serious guys like the Reaper and the FrogBot use velocity movement. This means that they are kind of pushed in the direction they need to go.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This method requires a lot of calculation, though. The other way, code movement is quite simple, mainly accomplished through the functions walkmove() and movetogoal(). Serious programmers usually avoid this technique because they think it is too limited.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;They're wrong.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I discovered a way to break code movement wide open, to accomplish great things with it. I've never seen my method used elsewhere, either. But now you will learn my secret.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Velocity movement is challenging because if you just push a bot in one direction, you don't know if he'll hit an obstacle, so you always have to check manually for them. I got into QuakeC for fun, not to do calculations. I like easy. Code functions like walkmove() will return true or false if he can or cannot move. You know in one line of code that you must turn him around or whatever.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It's true, however, that our Tutor Bot moves slowly. We can easily change this. Strangely enough, we change this by combining velocity movement with code movement.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;That is, we'll call walkmove() or movetogoal(), and if he can move, we'll give him an extra push. Let's do it.<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You'll be glad to know that there are only two changes we have to make in this lesson, and they are both easy. First, open tutor.qc and scroll to the end of bot_walk() where you'll see this:<BR><BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	if (self.goalentity != world)
+		movetogoal(20);
+		else coffee_move();
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, monsters and some bots think every 0.1 seconds, or every tenth of a second. In other words, they think ten times a second.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This of course is his peacetime movement code. All we need to do here is add this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+	makevectors(self.angles);
+	self.flags = self.flags - (self.flags & FL_ONGROUND);
+	self.velocity = v_forward * 300;
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cool, only three lines of code. First, makevectors() will calculate which direction is forward for the bot. Second, we will kind of unglue him from the ground. Finally, we will push him forward with 300 units of speed.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boom, that's my secret. Now you know. Simple, eh? Then why hasn't anybody else combined these two methods? I'll tell you why, because coders love to overthink AI, that's why.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A note: I chose the 300 number because it's a good medium speed. Please experiment with it. You can make it low, like 50, or high, like 800. The bot will roam the level much more swiftly now.<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Now onto the final change. Scroll a little down to bot_run_slide(), his strafing routine. Just replace all of it with all of this:<BR>
+
+<PRE>
+<FONT COLOR="DFBFFF" FACE="System">
+// --------------------------------
+void() bot_run_slide =
+// --------------------------------
+{
+local float	ofs;
+	
+// this is a cool strafing routine
+
+	if (self.lefty)
+		ofs = 90;
+	else
+		ofs = -90;
+
+	if (walkmove (self.angles_y + ofs, 20))
+		{
+		if (ofs == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * 300;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * -300;
+			}
+		return;
+		}
+
+	self.lefty = 1 - self.lefty;
+
+	walkmove (self.angles_y - ofs, 20);
+
+		if (ofs == -90)
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * 300;
+			}
+		else
+			{
+			makevectors(self.angles);
+			self.flags = self.flags - (self.flags & FL_ONGROUND);
+			self.velocity = v_right * -300;
+			}
+};
+</FONT>
+</PRE>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The subroutine is a bit longer yes, but nothing to sweat. We are basically just repeating our earlier three-line method four times.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You see, bot_run_slide() is a bit tricky because when the bot strafes into a wall, he changes directions. This is stored in his self.lefty, but it doesn't really store whether he's going left or right.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Anyway, we check the ofs (offset) value to see if it is positive or negative. Then we push him to the right, or negative right (there is no v_left, just v_right).<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Put another way, if he is going to subtract 90 degrees from his self.angles_y, he will be moving right, so we'll push him right.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Don't understand? Doesn't matter. It's a bit technical even for me. As long as it works, I'm happy.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remember two things; one, you can play with that 300 value. Second, you can place those three lines of velocity code after any walkmove() or movetogoal() function to make it faster. In fact, there might be one we missed. Can you find it?<P>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After you save and compile this, the bot will now strafe to the left and right very quickly, making him a hard-core opponent. Pretty cool.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Maybe next time I will tell you my secret on how to pick winning lottery numbers.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nah, I can't tell you everything.<P>
+
+
+&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+<CENTER><H3>What We Learned</H3></CENTER>
+
+1. You don't have to be smart to do smart things<BR>
+2. Velocity code can be very complicated<BR> 
+3. Velocity code can be very simple<BR> 
+4. Fast strafing can make a challenging bot<BR>
+
+<CENTER>&nbsp;<P><HR SIZE=3 WIDTH=100% ALIGN=Center>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Author: Coffee<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Questions: <A HREF="mailto:coffee@planetquake.com">coffee@planetquake.com</A><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI chat on ICQ: 2716002<BR>
+<HR SIZE=3 WIDTH=100% ALIGN=Center>
+</CENTER>
